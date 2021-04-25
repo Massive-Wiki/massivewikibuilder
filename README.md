@@ -41,7 +41,7 @@ python3 -m http.server
 
 ## Themes
 
-MWB uses a simple theming system.  All the files are placed in subdirectory in the `themes` directory.
+MWB uses a simple theming system.  All the files for one theme are placed in a subdirectory in the `themes` directory.  For example, the Alto theme is in `themes/alto`, and to use the Alto theme, pass `-t themes/alto` to MWB.
 
 MWB builds the pages with Jinja2, so you can use Jinja2 directives within the HTML files to include wiki metadata and wiki content.  You can also use the Jinja2 `include` functionality to extract reused parts of the page to HTML "partial" files.
 
