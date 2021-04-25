@@ -23,12 +23,14 @@ Note that MWB removes (if necessary) and recreates the `output` directory each t
 (not yet completed)
 (remember to `pip install -r requirements.txt`)
 
+(clone massive-wiki-themes repo, call it massive-wiki-themes)
+
 ## Build
 
 In `.massivewikibuilder/`:
 
 ```
-./mwb.py -w .. -o output -t themes/alto
+./mwb.py -w .. -o output -t massive-wiki-themes/alto
 ```
 
 ## Develop
@@ -41,12 +43,9 @@ python3 -m http.server
 
 ## Themes
 
-MWB uses a simple theming system.  All the files for one theme are placed in a subdirectory in the `themes` directory.  For example, the Alto theme is in `themes/alto`, and to use the Alto theme, pass `-t themes/alto` to MWB.
+MWB uses a simple theming system.  All the files for one theme are placed in a subdirectory in the themes directory, usually `massive-wiki-themes`.  For example, the Alto theme is in `massive-wiki-themes/alto`, and to use the Alto theme, pass `-t massive-wiki-themes/alto` to MWB.
 
 MWB builds the pages with Jinja2, so you can use Jinja2 directives within the HTML files to include wiki metadata and wiki content.  You can also use the Jinja2 `include` functionality to extract reused parts of the page to HTML "partial" files.
 
-These themes are included in this repo:
+Themes are in a separate repo, [github/peterkaminski/massive-wiki-themes](https://github.com/peterkaminski/massive-wiki-themes).
 
-- Alto - a simple but nice responsive theme, implemented with [Bulma](https://bulma.io).  It would be fairly easy to add more Bulma components to the pages.
-- Skeleton - a straightforward, plain HTML theme, demonstrating a minimally viable theme.  It uses `include` functionality for a navbar and footer.
-- Super Skeleton - the bare minimum, even more minimal than Skeleton; not even includes.
