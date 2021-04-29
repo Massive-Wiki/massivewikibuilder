@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.2.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.2.1 - https://github.com/peterkaminski/massivewikibuilder
 
 import argparse
 import json
@@ -8,8 +8,9 @@ import os
 import re
 import shutil
 import sys
+import traceback
 
-from datetime import timezone, datetime
+import datetime
 from pathlib import Path
 
 import yaml
@@ -49,7 +50,7 @@ def read_markdown_and_front_matter(path):
     with path.open() as infile:
         lines = infile.readlines()
     # take care to look exactly for two `---` lines with valid YAML in between
-    if re.match(r'^---$',lines[0]):
+    if lines and re.match(r'^---$',lines[0]):
         count = 0
         found_front_matter_end = False
         for line in lines[1:]:
@@ -67,6 +68,11 @@ def read_markdown_and_front_matter(path):
             return ''.join(lines[count+1:]), front_matter
     # return Markdown + empty dict
     return ''.join(lines), {}
+
+# handle datetime.date serialization for json.dumps()
+def datetime_date_serializer(o):
+    if isinstance(o, datetime.date):
+        return o.isoformat()
 
 def main():
     argparser = init_argparse();
@@ -95,7 +101,7 @@ def main():
         # copy wiki to output; render .md files to HTML
         all_pages = []
         page = j.get_template('page.html')
-        build_time = datetime.now(timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
+        build_time = datetime.datetime.now(datetime.timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
         for root, dirs, files in os.walk(dir_wiki):
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             files = [f for f in files if not f.startswith('.')]
@@ -112,7 +118,7 @@ def main():
                         print(f"NOTE: YAML syntax error in front matter of '{Path(root) / file}'")
                         front_matter = {}
                     # output JSON of front matter
-                    (Path(dir_output) / path / clean_name).with_suffix(".json").write_text(json.dumps(front_matter, indent=2))
+                    (Path(dir_output) / path / clean_name).with_suffix(".json").write_text(json.dumps(front_matter, indent=2, default=datetime_date_serializer))
 
                     # render and output HTML
                     markdown_body = markdown.convert(markdown_text)
@@ -131,14 +137,14 @@ def main():
         # copy static assets directory
         if os.path.exists(Path(dir_templates) / 'mwb-static'):
             shutil.copytree(Path(dir_templates) / 'mwb-static', Path(dir_output) / 'mwb-static')
-        
+
         # build all-pages.html
         all_pages = sorted(all_pages, key=lambda i: i['title'].lower())
         html = j.get_template('all-pages.html').render(build_time=build_time, pages=all_pages, wiki_title=wiki_title, author=author, repo=repo, license=license)
         (Path(dir_output) / "all-pages.html").write_text(html)
 
     except Exception as e:
-        print(e)
+        traceback.print_exc(e)
 
 if __name__ == "__main__":
     exit(main())
