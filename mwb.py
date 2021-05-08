@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.2.1 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.3.0 - https://github.com/peterkaminski/massivewikibuilder
 
 import argparse
 import json
@@ -22,6 +22,7 @@ from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 # set up argparse
 def init_argparse():
     parser = argparse.ArgumentParser(description='Generate HTML pages from Markdown wiki pages.')
+    parser.add_argument('--config', '-c', required=True, help='path to YAML config file')
     parser.add_argument('--output', '-o', required=True, help='directory for output')
     parser.add_argument('--templates', '-t', required=True, help='directory for HTML templates')
     parser.add_argument('--wiki', '-w', required=True, help='directory containing wiki files (Markdown + other)')
@@ -42,6 +43,11 @@ def jinja2_environment(path_to_templates):
     return jinja2.Environment(
         loader=jinja2.FileSystemLoader(path_to_templates)
     )
+
+# load config file
+def load_config(path):
+    with open(path) as infile:
+        return yaml.safe_load(infile)
 
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
@@ -79,10 +85,7 @@ def main():
     args = argparser.parse_args();
 
     # get configuration
-    wiki_title = "Massive Wiki"
-    author = "the Massive Wiki Team"
-    repo = '<a href="https://github.com/Massive-Wiki/massive-wiki">GitHub/Massive-Wiki/massive-wiki</a>'
-    license = '<a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>'
+    config = load_config(args.config)
 
     # remember paths
     dir_output = os.path.abspath(args.output)
@@ -122,7 +125,15 @@ def main():
 
                     # render and output HTML
                     markdown_body = markdown.convert(markdown_text)
-                    html = page.render(build_time=build_time, wiki_title=wiki_title, author=author, repo=repo, license=license, title=file[:-3], markdown_body=markdown_body)
+                    html = page.render(
+                        build_time=build_time,
+                        wiki_title=config['wiki_title'],
+                        author=config['author'],
+                        repo=config['repo'],
+                        license=config['license'],
+                        title=file[:-3],
+                        markdown_body=markdown_body
+                    )
                     (Path(dir_output) / path / clean_name).with_suffix(".html").write_text(html)
 
                     # remember this page for All Pages
@@ -140,7 +151,14 @@ def main():
 
         # build all-pages.html
         all_pages = sorted(all_pages, key=lambda i: i['title'].lower())
-        html = j.get_template('all-pages.html').render(build_time=build_time, pages=all_pages, wiki_title=wiki_title, author=author, repo=repo, license=license)
+        html = j.get_template('all-pages.html').render(
+            build_time=build_time,
+            pages=all_pages,
+            wiki_title=config['wiki_title'],
+            author=config['author'],
+            repo=config['repo'],
+            license=config['license']
+        )
         (Path(dir_output) / "all-pages.html").write_text(html)
 
     except Exception as e:
