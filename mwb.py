@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.3.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.3.1 - https://github.com/peterkaminski/massivewikibuilder
 
 import argparse
 import json
@@ -36,7 +36,11 @@ markdown_configs = {
         'url_whitespace': '_',
     },
 }
-markdown = Markdown(output_format="html5", extensions=[WikiLinkPlusExtension(markdown_configs['mdx_wikilink_plus'])])
+markdown_extensions = [
+    'footnotes',
+    WikiLinkPlusExtension(markdown_configs['mdx_wikilink_plus']),
+]
+markdown = Markdown(output_format="html5", extensions=markdown_extensions)
 
 # set up a Jinja2 environment
 def jinja2_environment(path_to_templates):
