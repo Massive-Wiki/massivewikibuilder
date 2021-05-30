@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.3.1 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.3.2 - https://github.com/peterkaminski/massivewikibuilder
 
 import argparse
 import json
@@ -38,6 +38,7 @@ markdown_configs = {
 }
 markdown_extensions = [
     'footnotes',
+    'tables',
     WikiLinkPlusExtension(markdown_configs['mdx_wikilink_plus']),
 ]
 markdown = Markdown(output_format="html5", extensions=markdown_extensions)
