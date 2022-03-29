@@ -29,9 +29,50 @@ Note that MWB removes (if necessary) and recreates the `output` directory each t
 
 In `.massivewikibuilder/`:
 
-```
+```shell
 ./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto
 ```
+
+If you want to print a log what's happening during the build, set the `LOGLEVEL` environment variable to `DEBUG`.
+
+On the command line, do:
+
+```shell
+LOGLEVEL=DEBUG ./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto
+```
+
+or:
+
+```shell
+export LOGLEVEL=DEBUG
+./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto
+```
+
+In `netlify.toml`, do:
+
+```toml
+[build.environment]
+  LOGLEVEL = "DEBUG"
+```
+
+
+
+## Deploy (Netlify)
+
+For Netlify deploys, you can include a `netlify.toml` file like this at the root of your repo:
+
+```toml
+[build]
+  ignore = "/bin/false"
+  base = ".massivewikibuilder"
+  publish = "output"
+  command = "./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto"
+
+[build.environment]
+  PYTHON_VERSION = "3.8"
+```
+
+
 
 ## Develop
 
