@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.4.1 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.6.0 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -84,6 +84,14 @@ def read_markdown_and_front_matter(path):
     # return Markdown + empty dict
     return ''.join(lines), {}
 
+# read and convert Sidebar markdown to HTML
+def sidebar_convert_markdown(path):
+    if path.exists():
+        markdown_text, front_matter = read_markdown_and_front_matter(path)
+    else:
+        markdown_text = ''
+    return markdown.convert(markdown_text)
+
 # handle datetime.date serialization for json.dumps()
 def datetime_date_serializer(o):
     if isinstance(o, datetime.date):
@@ -119,6 +127,7 @@ def main():
         all_pages = []
         page = j.get_template('page.html')
         build_time = datetime.datetime.now(datetime.timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
+        sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'])
         for root, dirs, files in os.walk(dir_wiki):
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             files = [f for f in files if not f.startswith('.')]
@@ -128,6 +137,9 @@ def main():
                 os.mkdir(Path(dir_output) / path)
             logging.debug(f"processing {files}")
             for file in files:
+                print("main: processing: file:  ",file)
+                if file == config['sidebar']:
+                    continue
                 clean_name = re.sub(r'([ ]+_)|(_[ ]+)|([ ]+)', '_', file)
                 if file.lower().endswith('.md'):
                     # parse Markdown file
@@ -148,7 +160,8 @@ def main():
                         repo=config['repo'],
                         license=config['license'],
                         title=file[:-3],
-                        markdown_body=markdown_body
+                        markdown_body=markdown_body,
+                        sidebar_body=sidebar_body
                     )
                     (Path(dir_output) / path / clean_name).with_suffix(".html").write_text(html)
 
