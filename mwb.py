@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.6.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.6.1 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -127,7 +127,10 @@ def main():
         all_pages = []
         page = j.get_template('page.html')
         build_time = datetime.datetime.now(datetime.timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
-        sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'])
+        if 'sidebar' in config:
+            sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'])
+        else:
+            sidebar_body = ''
         for root, dirs, files in os.walk(dir_wiki):
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             files = [f for f in files if not f.startswith('.')]
@@ -138,7 +141,7 @@ def main():
             logging.debug(f"processing {files}")
             for file in files:
                 print("main: processing: file:  ",file)
-                if file == config['sidebar']:
+                if 'sidebar' in config and file == config['sidebar']:
                     continue
                 clean_name = re.sub(r'([ ]+_)|(_[ ]+)|([ ]+)', '_', file)
                 if file.lower().endswith('.md'):
