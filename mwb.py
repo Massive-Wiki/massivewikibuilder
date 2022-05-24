@@ -154,9 +154,9 @@ def main():
 
                     # remember this page for All Pages
                     all_pages.append({'title':f"{readable_path}/{file[:-3]}", 'path':f"{path}/{clean_name[:-3]}.html"})
-        # copy all original files
-        logging.debug("copy all original files")
-        shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
+                # copy all original files
+                logging.debug("copy all original files")
+                shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
 
         # copy README.html to index.html if no index.html
         logging.debug("copy README.html to index.html if no index.html")
