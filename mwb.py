@@ -79,8 +79,7 @@ def load_config(path):
 # scrub wiki path to handle ' ', '_', '?', and '#' characters in wiki page names
 # change ' ', ?', and '#' to '_', because they're inconvenient in URLs
 def scrub_path(filepath):
-    scrubbed_path = re.sub(r'([ _?\#]+)', '_', filepath)
-    return scrubbed_path
+    return re.sub(r'([ _?\#]+)', '_', filepath)
 
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
