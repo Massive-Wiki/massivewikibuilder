@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.6.1 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.7.0 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -21,7 +21,8 @@ import yaml
 import jinja2
 
 from markdown import Markdown
-from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
+sys.path.append('./mwb_wikilink_plus/')
+from mwb_wikilink_plus.mwb_wikilink_plus import WikiLinkPlusExtension
 
 # set up argparse
 def init_argparse():
@@ -32,18 +33,35 @@ def init_argparse():
     parser.add_argument('--wiki', '-w', required=True, help='directory containing wiki files (Markdown + other)')
     return parser
 
+wikifiles = {}
+
+def mwb_build_wikilink(path, base, end, url_whitespace, url_case):
+    logging.debug("1 mwb_build_wikilink: path: ", path)
+    path_name = Path(path).name
+    wikilink = Path(path_name).as_posix()  # use path_name if no wikipath
+    if path_name in wikifiles.keys():
+        wikipath = wikifiles[path_name]
+        logging.debug("2 mwb_build_wikilink: wikipath: ", wikipath)
+        if wikipath.endswith('.md'):
+            wikilink = Path(wikipath).with_suffix('.html').as_posix()
+        else:
+            wikilink = Path(wikipath).as_posix()
+    logging.debug("3 mwb_build_wikilink return: ", wikilink)
+    return wikilink
+
 # set up markdown
 markdown_configs = {
-    'mdx_wikilink_plus': {
+    'mwb_wikilink_plus': {
         'base_url': '',
         'end_url': '.html',
         'url_whitespace': '_',
+        'build_url': mwb_build_wikilink,
     },
 }
 markdown_extensions = [
     'footnotes',
     'tables',
-    WikiLinkPlusExtension(markdown_configs['mdx_wikilink_plus']),
+    WikiLinkPlusExtension(markdown_configs['mwb_wikilink_plus']),
 ]
 markdown = Markdown(output_format="html5", extensions=markdown_extensions)
 
@@ -57,6 +75,11 @@ def jinja2_environment(path_to_templates):
 def load_config(path):
     with open(path) as infile:
         return yaml.safe_load(infile)
+
+# scrub wiki path to handle ' ', '_', '?', and '#' characters in wiki page names
+# change ' ', ?', and '#' to '_', because they're inconvenient in URLs
+def scrub_path(filepath):
+    return re.sub(r'([ _?\#]+)', '_', filepath)
 
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
@@ -122,6 +145,21 @@ def main():
         shutil.rmtree(dir_output, ignore_errors=True)
         os.mkdir(dir_output)
 
+        # generate dict of filenames and their wikipaths
+        for root,dirs,files in os.walk(dir_wiki):
+            dirs[:]=[d for d in dirs if not d.startswith('.')]
+            files=[f for f in files if not f.startswith('.')]
+            readable_path = root[len(dir_wiki):]
+            path = scrub_path(readable_path)
+            for file in files:
+                if file in ['netlify.toml']:
+                    continue
+                clean_name = scrub_path(file)
+                if '.md' == Path(file).suffix.lower():
+                    wikifiles[Path(file).stem] = Path(path) / clean_name
+                else:
+                    wikifiles[Path(file).name] = Path(path) / clean_name
+        logging.debug("wikifiles: ", wikifiles)
         # copy wiki to output; render .md files to HTML
         logging.debug("copy wiki to output; render .md files to HTML")
         all_pages = []
@@ -135,15 +173,15 @@ def main():
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             files = [f for f in files if not f.startswith('.')]
             readable_path = root[len(dir_wiki)+1:]
-            path = re.sub(r'([ ]+_)|(_[ ]+)|([ ]+)', '_', readable_path)
+            path = scrub_path(readable_path)
             if not os.path.exists(Path(dir_output) / path):
                 os.mkdir(Path(dir_output) / path)
             logging.debug(f"processing {files}")
             for file in files:
-                print("main: processing: file:  ",file)
+                logging.debug("main: processing: file:  ",file)
                 if 'sidebar' in config and file == config['sidebar']:
                     continue
-                clean_name = re.sub(r'([ ]+_)|(_[ ]+)|([ ]+)', '_', file)
+                clean_name = scrub_path(file)
                 if file.lower().endswith('.md'):
                     # parse Markdown file
                     markdown_text, front_matter = read_markdown_and_front_matter(Path(root) / file)
