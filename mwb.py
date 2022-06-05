@@ -155,10 +155,10 @@ def main():
                 if file in ['netlify.toml']:
                     continue
                 clean_name = scrub_path(file)
-                if file.endswith('.md'):
-                    wikifiles[Path(file[:-3]).name] = f"{path}/{clean_name}"
+                if '.md' == Path(file).suffix.lower():
+                    wikifiles[Path(file).stem] = Path(path) / clean_name
                 else:
-                    wikifiles[Path(file).name] = f"{path}/{clean_name}"
+                    wikifiles[Path(file).name] = Path(path) / clean_name
         logging.debug("wikifiles: ", wikifiles)
         # copy wiki to output; render .md files to HTML
         logging.debug("copy wiki to output; render .md files to HTML")
