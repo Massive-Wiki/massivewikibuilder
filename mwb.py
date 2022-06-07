@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.7.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.7.0-dev-20220607 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -36,17 +36,17 @@ def init_argparse():
 wikifiles = {}
 
 def mwb_build_wikilink(path, base, end, url_whitespace, url_case):
-    logging.debug("1 mwb_build_wikilink: path: ", path)
+    logging.debug("1 mwb_build_wikilink: path: %s", path)
     path_name = Path(path).name
     wikilink = Path(path_name).as_posix()  # use path_name if no wikipath
     if path_name in wikifiles.keys():
         wikipath = wikifiles[path_name]
-        logging.debug("2 mwb_build_wikilink: wikipath: ", wikipath)
+        logging.debug("2 mwb_build_wikilink: wikipath: %s", wikipath)
         if wikipath.endswith('.md'):
             wikilink = Path(wikipath).with_suffix('.html').as_posix()
         else:
             wikilink = Path(wikipath).as_posix()
-    logging.debug("3 mwb_build_wikilink return: ", wikilink)
+    logging.debug("3 mwb_build_wikilink return: %s", wikilink)
     return wikilink
 
 # set up markdown
@@ -125,7 +125,7 @@ def main():
 
     argparser = init_argparse();
     args = argparser.parse_args();
-    logging.debug(f"args: {args}")
+    logging.debug("args: %s", args)
 
     # get configuration
     config = load_config(args.config)
@@ -159,7 +159,7 @@ def main():
                     wikifiles[Path(file).stem] = (Path(path) / clean_name).as_posix()
                 else:
                     wikifiles[Path(file).name] = (Path(path) / clean_name).as_posix()
-        logging.debug("wikifiles: ", wikifiles)
+        logging.debug("wikifiles: %s", wikifiles)
         # copy wiki to output; render .md files to HTML
         logging.debug("copy wiki to output; render .md files to HTML")
         all_pages = []
@@ -176,9 +176,9 @@ def main():
             path = scrub_path(readable_path)
             if not os.path.exists(Path(dir_output) / path):
                 os.mkdir(Path(dir_output) / path)
-            logging.debug(f"processing {files}")
+            logging.debug("processing %s", files)
             for file in files:
-                logging.debug("main: processing: file:  ",file)
+                logging.debug("main: processing: file: %s", file)
                 if 'sidebar' in config and file == config['sidebar']:
                     continue
                 clean_name = scrub_path(file)
