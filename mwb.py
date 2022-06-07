@@ -156,9 +156,9 @@ def main():
                     continue
                 clean_name = scrub_path(file)
                 if '.md' == Path(file).suffix.lower():
-                    wikifiles[Path(file).stem] = (Path(path) / clean_name).as_posix()
+                    wikifiles[Path(file).stem] = f"{path}/{clean_name}"
                 else:
-                    wikifiles[Path(file).name] = (Path(path) / clean_name).as_posix()
+                    wikifiles[Path(file).name] = f"{path}/{clean_name}"
         logging.debug("wikifiles: %s", wikifiles)
         # copy wiki to output; render .md files to HTML
         logging.debug("copy wiki to output; render .md files to HTML")
