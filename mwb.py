@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.7.1 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v1.8.0 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -23,6 +23,7 @@ import jinja2
 from markdown import Markdown
 sys.path.append('./mwb_wikilink_plus/')
 from mwb_wikilink_plus.mwb_wikilink_plus import WikiLinkPlusExtension
+from mwb_del.mwb_del import DelExtension
 
 # set up argparse
 def init_argparse():
@@ -62,6 +63,7 @@ markdown_extensions = [
     'footnotes',
     'tables',
     WikiLinkPlusExtension(markdown_configs['mwb_wikilink_plus']),
+    DelExtension(),
 ]
 markdown = Markdown(output_format="html5", extensions=markdown_extensions)
 
