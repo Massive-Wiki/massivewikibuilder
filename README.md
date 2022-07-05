@@ -2,21 +2,60 @@
 
 Massive Wiki Builder is a static site generator for turning [Massive Wikis](https://massive.wiki/) into static HTML websites.
 
-Typically, it is installed at the root of the wiki, next to all the top-level Markdown files, in a subdirectory named `.massivewikibuilder`.
-
-The `.` character is important when the MWB directory is within the wiki itself.  MWB ignores dotfiles and dot-directories, so as it builds, it will ignore anything inside (for instance) `.obsidian` or `.massivewikibuilder` directories.  If you don't have it set up this way, MWB will continue to try to copy and convert the files in the output directory, and it will start an infinite loop, which will stop when the directory names get too long.
-
 ## Typical Hierarchy
+
+Typically, there is a `.massivewikibuilder` directory, which contains `massivewikibuilder` (this repo), and other related files and directories.
+
+The `.` character is important when the MWB workspace directory is within the wiki itself.  MWB ignores dotfiles and dot-directories, so as it builds, it will ignore anything inside (for instance) `.obsidian` or `.massivewikibuilder` directories.  If you don't have it set up this way, MWB will continue to try to copy and convert the files in the output directory, and it will start an infinite loop, which will stop when the directory names get too long.
 
 ```
 --/ # root of wiki directories
----- .massivewikibuilder/ # MWB and its input/output
+---- .massivewikibuilder/ # MWB workspace
+------ mwb.yaml # config for this wiki
+------ massivewikibuilder/ # MWB
+------ massive-wiki-themes/ # off-the-shelf themes, not customized
+-------- alto/ # a specific theme, customized for this wiki
+------ this-wiki-themes/ # theme(s) used for this wiki
+-------- alto/ # a specific theme, customized for this wiki
 ------ output/ # MWB writes .html, .md, and .json files here
------- themes/ # all the themes
--------- alto/ # a specific theme
 ```
 
 Note that MWB removes (if necessary) and recreates the `output` directory each time it is run.
+
+## Static Files
+
+Note: Prior to v1.9.0, MWB handled static files slightly differently. If `mwb-static` existed, it copied it from the theme directory to the output directory. Starting with v1.9.0, it will still do this, but it will output a warning, `WARNING:root:WARNING:root:mwb-static is deprecated, please use 'static'`. The warning is meant to suggest that you should move `mwb-static` into the `static` directory at the top level of the theme.  `static` is described below.
+
+After the HTML pages are built from the Markdown files, if a directory named `static` exists at the top level of the theme, all the files and directories within it are copied to the root of the output directory.  By convention, static files such as CSS, JavaScript, and images are put in a directory inside `static` called `mwb-static`. Favicon files and other files that should be at the root of the website are put at the root of `static`.
+
+The name `static` is used in the theme because it's descriptive, and won't collide with anything in the wiki. (The _content_ of `static` is copied, but not `static` itself.)
+
+The `mwb-static` convention is used to contain static files used by the wiki, and instead of `static`, it is named `mwb-static` so it is less likely to collide with a wiki directory with the same name. (In contrast to `static` in the theme, `mwb-static` itself _is_ copied to the output directory, where all the wiki files and directories live.)
+
+In the theme:
+
+```
+--/ # root of theme
+---- static/ # anything in here is copied to the root of the output
+------ favicon.ico # for instance, favicon.ico
+------ mwb-static/ # static files and subdirectories that don't need to be at the root of the website
+-------- css/
+-------- js/
+-------- images/
+```
+
+Results in the output website:
+
+```
+--/ # root of website
+--- favicon.ico # for instance, favicon.ico
+---- mwb-static/ # static files and subdirectories that don't need to be at the root of the website
+------ css/
+------ js/
+------ images/
+```
+
+Side note about favicon files; it is suggested to use a favicon generator such as [RealFaviconGenerator](https://realfavicongenerator.net/) to create the various icon files needed for different platforms. This note is meant for informational purposes, and does not represent an endorsement of RealFaviconGenerator in particular.
 
 ## Install
 
