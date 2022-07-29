@@ -66,6 +66,7 @@ markdown_configs = {
 markdown_extensions = [
     'footnotes',
     'tables',
+    'fenced_code',
     WikiLinkPlusExtension(markdown_configs['mwb_wikilink_plus']),
     DelExtension(),
 ]
