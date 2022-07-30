@@ -23,6 +23,15 @@ from pathlib import Path
 import yaml
 import jinja2
 
+# Define a non-zero return code error handler
+class ReturncodeNonZeroError(Exception):
+    def __init__(self, completed_process, msg=None):
+        if msg is None:
+            # default message if none set
+            msg = "An external program or script returned an error."
+        super(ReturncodeNonZeroError, self).__init__(msg)
+        self.completed_process = completed_process
+
 from markdown import Markdown
 sys.path.append('./mwb_wikilink_plus/')
 from mwb_wikilink_plus.mwb_wikilink_plus import WikiLinkPlusExtension
@@ -263,6 +272,8 @@ def main():
                 print("lunr_index=", end="", file=outfile)
                 outfile.seek(0, 2) # seek to EOF
                 p = subprocess.run(['node', 'build-index.js'], input=pages_index_bytes, stdout=outfile)
+                if p.returncode != 0:
+                    raise ReturncodeNonZeroError(p)
             with open(lunr_posts_filepath, "w") as outfile:
                 print("lunr_posts=", posts, file=outfile)
 
@@ -316,6 +327,10 @@ def main():
         # done
         logging.debug("done")
 
+    except ReturncodeNonZeroError as e:
+        print(f"\n{e}\n\nYou may need to install Node modules with 'npm ci'.\n")
+    except jinja2.exceptions.TemplateNotFound as e:
+        print(f"\nCan't find template '{e}'.\n\nTheme or files in theme appear to be missing, or theme argument set incorrectly.\n")
     except FileNotFoundError as e:
         print(f"\n{e}\n\nCheck that arguments specify valid files and directories.\n")
     except Exception as e:
