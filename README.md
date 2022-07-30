@@ -94,6 +94,58 @@ In `netlify.toml`, do:
   LOGLEVEL = "DEBUG"
 ```
 
+## Lunr
+
+To build an index for the [Lunr](https://lunrjs.com/) search engine, include the `--lunr` flag:
+
+```shell
+./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto --lunr
+```
+
+Lunr is a JavaScript library, so Node.js (`node`) and the Lunr library must be installed.
+
+To install Node, see <https://nodejs.org/en/download/>. On Mac, you may want to do `brew install node`.
+
+To install Lunr, in `.massivewikibuilder/massivewikibuilder` do:
+
+```shell
+npm ci # reads package.json and package-lock.json
+```
+
+When MWB runs, the Lunr indexes are generated at the root of the output directory, named like this (numbers change every microsecond): `lunr-index-1656193058.85086.js` (the reverse index) and `lunr-posts-1656193058.85086.js` (relates filepaths used by Lunr as keys, to human-readable page names).
+
+Two template variables, `lunr_index_sitepath` and  `lunr_posts_sitepath`, containing the website paths to the generated index JavaScript files, are passed to templates as the pages are built.
+
+In templates, loading the indexes is done like this:
+
+```
+{% if lunr_index_sitepath != '' %}
+<script src="{{lunr_index_sitepath}}"></script>
+{% endif %}
+{% if lunr_posts_sitepath != '' %}
+<script src="{{lunr_posts_sitepath}}"></script>
+{% endif %}
+```
+
+which results in this on the generated webpage:
+
+```html
+<script src="/lunr-index-1656193058.85086.js"></script>
+<script src="/lunr-posts-1656193058.85086.js"></script>
+```
+
+Add the rest of the code to the `<script>` sections of your pages to enable Lunr:
+
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.9/lunr.min.js"></script>
+<script>var index = lunr.Index.load(lunr_index)</script>
+// ...
+const searchResultList = index.search(searchString).map((item) => {
+              return lunr_posts.find((post) => item.ref === post.link)
+          })
+// ...
+```
+
 
 
 ## Deploy (Netlify)
@@ -105,13 +157,21 @@ For Netlify deploys, you can include a `netlify.toml` file like this at the root
   ignore = "/bin/false"
   base = ".massivewikibuilder"
   publish = "output"
-  command = "./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto"
+  command = "./mwb.py -c mwb.yaml -w ../.. -o ../output -t ../massive-wiki-themes/alto"
 
 [build.environment]
   PYTHON_VERSION = "3.8"
 ```
 
+It is recommended that you make a copy of `massive-wiki-themes` called `this-wiki-themes` at the same directory level, then customize your themes inside of `this-wiki-themes`.
 
+The build command would then be (substitute your theme name instead of `alto` as necessary:
+
+```shell
+./mwb.py -c mwb.yaml -w ../.. -o ../output -t ../this-wiki-themes/alto
+```
+
+ 
 
 ## Develop
 

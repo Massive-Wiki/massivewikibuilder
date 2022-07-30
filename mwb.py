@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v1.9.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v2.0.0 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -8,10 +8,13 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
 
 # python libraries
 import argparse
+import glob
 import json
 import re
 import shutil
+import subprocess
 import sys
+import time
 import traceback
 
 import datetime
@@ -19,6 +22,15 @@ from pathlib import Path
 
 import yaml
 import jinja2
+
+# Define a non-zero return code error handler
+class ReturncodeNonZeroError(Exception):
+    def __init__(self, completed_process, msg=None):
+        if msg is None:
+            # default message if none set
+            msg = "An external program or script returned an error."
+        super(ReturncodeNonZeroError, self).__init__(msg)
+        self.completed_process = completed_process
 
 from markdown import Markdown
 sys.path.append('./mwb_wikilink_plus/')
@@ -32,6 +44,7 @@ def init_argparse():
     parser.add_argument('--output', '-o', required=True, help='directory for output')
     parser.add_argument('--templates', '-t', required=True, help='directory for HTML templates')
     parser.add_argument('--wiki', '-w', required=True, help='directory containing wiki files (Markdown + other)')
+    parser.add_argument('--lunr', action='store_true', help='include this to create lunr index (requires npm and lunr to be installed, read docs)')
     return parser
 
 wikifiles = {}
@@ -62,6 +75,7 @@ markdown_configs = {
 markdown_extensions = [
     'footnotes',
     'tables',
+    'fenced_code',
     WikiLinkPlusExtension(markdown_configs['mwb_wikilink_plus']),
     DelExtension(),
 ]
@@ -82,6 +96,24 @@ def load_config(path):
 # change ' ', ?', and '#' to '_', because they're inconvenient in URLs
 def scrub_path(filepath):
     return re.sub(r'([ _?\#]+)', '_', filepath)
+
+# index_wiki
+def index_wiki(dir_wiki):
+
+    logging.debug("index_wiki(): wiki folder %s: ", dir_wiki)
+
+    mdfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.md", recursive=True)] # TODO: consider adding .txt
+
+    idx_data=[]
+    posts=[]
+    for i, f in enumerate(mdfiles):
+        link = "/"+scrub_path(Path(f).relative_to(dir_wiki).with_suffix('.html').as_posix())
+        title = Path(f).stem
+        idx_data.append({"link":link, "title":title, "body": Path(f).read_text()})
+        posts.append({"link":link, "title":title})
+
+    logging.debug("index_wiki(): index length %s: ",len(idx_data))
+    return idx_data, posts
 
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
@@ -139,6 +171,20 @@ def main():
 
     # get a Jinja2 environment
     j = jinja2_environment(dir_templates)
+
+    # set up lunr_index_filename and lunr_index_sitepath
+    if (args.lunr):
+        timestamp_thisrun = time.time()
+        lunr_index_filename = f"lunr-index-{timestamp_thisrun}.js" # needed for next two variables
+        lunr_index_filepath = Path(dir_output) / lunr_index_filename # local filesystem
+        lunr_index_sitepath = '/'+lunr_index_filename # website
+        lunr_posts_filename = f"lunr-posts-{timestamp_thisrun}.js" # needed for next two variables
+        lunr_posts_filepath = Path(dir_output) / lunr_posts_filename # local filesystem
+        lunr_posts_sitepath = '/'+lunr_posts_filename # website
+    else:
+        # needed to feed to themes
+        lunr_index_sitepath = ''
+        lunr_posts_sitepath = ''
 
     # render the wiki
     try:
@@ -204,7 +250,9 @@ def main():
                         license=config['license'],
                         title=file[:-3],
                         markdown_body=markdown_body,
-                        sidebar_body=sidebar_body
+                        sidebar_body=sidebar_body,
+                        lunr_index_sitepath=lunr_index_sitepath,
+                        lunr_posts_sitepath=lunr_posts_sitepath,
                     )
                     (Path(dir_output) / path / clean_name).with_suffix(".html").write_text(html)
 
@@ -213,6 +261,40 @@ def main():
                 # copy all original files
                 logging.debug("copy all original files")
                 shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
+
+        # build Lunr search index if --lunr
+        if (args.lunr):
+            logging.debug("building lunr index: %s", lunr_index_filepath)
+            # ref: https://lunrjs.com/guides/index_prebuilding.html
+            pages_index, posts = index_wiki(dir_wiki)
+            pages_index_bytes = json.dumps(pages_index).encode('utf-8') # NOTE: build-index.js requires text as input - convert dict to string (then do encoding to bytes either here or set `encoding` in subprocess.run())
+            with open(lunr_index_filepath, "w") as outfile:
+                print("lunr_index=", end="", file=outfile)
+                outfile.seek(0, 2) # seek to EOF
+                p = subprocess.run(['node', 'build-index.js'], input=pages_index_bytes, stdout=outfile)
+                if p.returncode != 0:
+                    raise ReturncodeNonZeroError(p)
+            with open(lunr_posts_filepath, "w") as outfile:
+                print("lunr_posts=", posts, file=outfile)
+
+        # and then the search javascript will do this:
+        #   <script src="/lunr-index-1656192217.474129.js"></script>
+        #   <script src="/lunr-posts-1656192217.474129.js"></script>
+        # and the variables `lunr_index` will contain the index, `lunr_posts` will contain the links+titles
+
+        # temporary handling of search.html - TODO, do this better :-)
+        search_page = j.get_template('search.html')
+        html = search_page.render(
+            build_time=build_time,
+            wiki_title=config['wiki_title'],
+            author=config['author'],
+            repo=config['repo'],
+            license=config['license'],
+            sidebar_body=sidebar_body,
+            lunr_index_sitepath=lunr_index_sitepath,
+            lunr_posts_sitepath=lunr_posts_sitepath,
+        )
+        (Path(dir_output) / "search.html").write_text(html)
 
         # copy README.html to index.html if no index.html
         logging.debug("copy README.html to index.html if no index.html")
@@ -236,13 +318,21 @@ def main():
             wiki_title=config['wiki_title'],
             author=config['author'],
             repo=config['repo'],
-            license=config['license']
+            license=config['license'],
+            lunr_index_sitepath=lunr_index_sitepath,
+            lunr_posts_sitepath=lunr_posts_sitepath,
         )
         (Path(dir_output) / "all-pages.html").write_text(html)
 
         # done
         logging.debug("done")
 
+    except ReturncodeNonZeroError as e:
+        print(f"\n{e}\n\nYou may need to install Node modules with 'npm ci'.\n")
+    except jinja2.exceptions.TemplateNotFound as e:
+        print(f"\nCan't find template '{e}'.\n\nTheme or files in theme appear to be missing, or theme argument set incorrectly.\n")
+    except FileNotFoundError as e:
+        print(f"\n{e}\n\nCheck that arguments specify valid files and directories.\n")
     except Exception as e:
         traceback.print_exc(e)
 
