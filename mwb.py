@@ -315,6 +315,8 @@ def main():
         # done
         logging.debug("done")
 
+    except FileNotFoundError as e:
+        print(f"\n{e}\n\nCheck that arguments specify valid files and directories.\n")
     except Exception as e:
         traceback.print_exc(e)
 
