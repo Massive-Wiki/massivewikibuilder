@@ -94,6 +94,23 @@ In `netlify.toml`, do:
   LOGLEVEL = "DEBUG"
 ```
 
+## Git Commits
+
+To output authors, commit messages, and timestamps for each page in the All Pages page, include the `--commits` flag:
+
+```shell
+./mwb.py -c mwb.yaml -w .. -o output -t massive-wiki-themes/alto --commits
+```
+
+In the `all-pages.html` template (template may have a different file name), the following variables are available when `--commits` is active:
+
+- `pages_chrono` - an array of all the pages, sorted chronologically
+- `page.author` - the author name of the most recent commit for this page
+- `page.change` - the commit message for the most recent commit for this page
+- `page.date` - the timestamp for the most recent commit for this page
+
+If `--commits` is not active, each of those variables is set to empty string `''`.
+
 ## Lunr
 
 To build an index for the [Lunr](https://lunrjs.com/) search engine, include the `--lunr` flag:

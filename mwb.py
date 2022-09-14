@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v2.0.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v2.1.0 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os
@@ -8,8 +8,10 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
 
 # python libraries
 import argparse
+import datetime
 import glob
 import json
+from pathlib import Path
 import re
 import shutil
 import subprocess
@@ -17,20 +19,10 @@ import sys
 import time
 import traceback
 
-import datetime
-from pathlib import Path
-
-import yaml
+# pip install
+from dateutil.parser import parse # pip install python-dateutil
 import jinja2
-
-# Define a non-zero return code error handler
-class ReturncodeNonZeroError(Exception):
-    def __init__(self, completed_process, msg=None):
-        if msg is None:
-            # default message if none set
-            msg = "An external program or script returned an error."
-        super(ReturncodeNonZeroError, self).__init__(msg)
-        self.completed_process = completed_process
+import yaml
 
 from markdown import Markdown
 sys.path.append('./mwb_wikilink_plus/')
@@ -45,6 +37,7 @@ def init_argparse():
     parser.add_argument('--templates', '-t', required=True, help='directory for HTML templates')
     parser.add_argument('--wiki', '-w', required=True, help='directory containing wiki files (Markdown + other)')
     parser.add_argument('--lunr', action='store_true', help='include this to create lunr index (requires npm and lunr to be installed, read docs)')
+    parser.add_argument('--commits', action='store_true', help='include this to read Git commit messages and times, for All Pages')
     return parser
 
 wikifiles = {}
@@ -256,8 +249,24 @@ def main():
                     )
                     (Path(dir_output) / path / clean_name).with_suffix(".html").write_text(html)
 
+                    # get commit message and time
+                    if args.commits:
+                        p = subprocess.run(["git", "-C", Path(root), "log", "-1", '--pretty="%cI\t%an\t%s"', file], capture_output=True, check=True)
+                        (date,author,change)=p.stdout.decode('utf-8')[1:-2].split('\t',2)
+                        date = parse(date).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d, %H:%M")
+                    else:
+                        date = ''
+                        change = ''
+                        author = ''
+
                     # remember this page for All Pages
-                    all_pages.append({'title':f"{readable_path}/{file[:-3]}", 'path':f"{path}/{clean_name[:-3]}.html"})
+                    all_pages.append({
+                        'title':f"{readable_path}/{file[:-3]}".lstrip('/'),
+                        'path':f"{path}/{clean_name[:-3]}.html",
+                        'date':date,
+                        'change':change,
+                        'author':author,
+                    })
                 # copy all original files
                 logging.debug("copy all original files")
                 shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
@@ -271,9 +280,7 @@ def main():
             with open(lunr_index_filepath, "w") as outfile:
                 print("lunr_index=", end="", file=outfile)
                 outfile.seek(0, 2) # seek to EOF
-                p = subprocess.run(['node', 'build-index.js'], input=pages_index_bytes, stdout=outfile)
-                if p.returncode != 0:
-                    raise ReturncodeNonZeroError(p)
+                p = subprocess.run(['node', 'build-index.js'], input=pages_index_bytes, stdout=outfile, check=True)
             with open(lunr_posts_filepath, "w") as outfile:
                 print("lunr_posts=", posts, file=outfile)
 
@@ -311,10 +318,15 @@ def main():
 
         # build all-pages.html
         logging.debug("build all-pages.html")
+        if args.commits:
+            all_pages_chrono = sorted(all_pages, key=lambda i: i['date'], reverse=True)
+        else:
+            all_pages_chrono = ''
         all_pages = sorted(all_pages, key=lambda i: i['title'].lower())
         html = j.get_template('all-pages.html').render(
             build_time=build_time,
             pages=all_pages,
+            pages_chrono=all_pages_chrono,
             wiki_title=config['wiki_title'],
             author=config['author'],
             repo=config['repo'],
@@ -327,8 +339,13 @@ def main():
         # done
         logging.debug("done")
 
-    except ReturncodeNonZeroError as e:
-        print(f"\n{e}\n\nYou may need to install Node modules with 'npm ci'.\n")
+    except subprocess.CalledProcessError as e:
+        print(f"\nERROR: '{e.cmd[0]}' returned error code {e.returncode}.")
+        print(f"Output was '{e.output}'")
+        if e.cmd[0] == 'node':
+            print(f"\nYou may need to install Node modules with 'npm ci'.\n")
+        if e.cmd[0] == 'git':
+            print(f"\nThere was a problem with Git.\n")
     except jinja2.exceptions.TemplateNotFound as e:
         print(f"\nCan't find template '{e}'.\n\nTheme or files in theme appear to be missing, or theme argument set incorrectly.\n")
     except FileNotFoundError as e:
