@@ -142,7 +142,7 @@ class WikiLinkPlusPattern(markdown.inlinepatterns.Pattern):
             base_url, end_url, url_whitespace, url_case, label_case, html_class, image_class = self._getMeta()
             clean_path = tl
             isimage = False
-            imagesuffixes = ['.png', '.jpg', '.jpeg', '.gif', '.svg']
+            imagesuffixes = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp']
             for suffix in imagesuffixes:
                 if clean_path.lower().endswith(suffix):
                     isimage = True
