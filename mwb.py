@@ -156,6 +156,8 @@ def main():
 
     # get configuration
     config = load_config(args.config)
+    if not 'root_directory' in config:
+        config['root_directory'] = '/'
 
     # remember paths
     dir_output = os.path.abspath(args.output)
