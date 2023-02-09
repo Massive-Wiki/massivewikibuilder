@@ -47,7 +47,7 @@ def mwb_build_wikilink(path, base, end, url_whitespace, url_case):
     path_name = Path(path).name
     wikilink = Path(path_name).as_posix()  # use path_name if no wikipath
     if path_name in wikifiles.keys():
-        wikipath = wikifiles[path_name]
+        wikipath = config['root_directory'] + wikifiles[path_name]
         logging.debug("2 mwb_build_wikilink: wikipath: %s", wikipath)
         if wikipath.endswith('.md'):
             wikilink = Path(wikipath).with_suffix('.html').as_posix()
@@ -156,6 +156,8 @@ def main():
 
     # get configuration
     config = load_config(args.config)
+    if not 'root_directory' in config:
+        config['root_directory'] = '/'
 
     # remember paths
     dir_output = os.path.abspath(args.output)
@@ -170,10 +172,10 @@ def main():
         timestamp_thisrun = time.time()
         lunr_index_filename = f"lunr-index-{timestamp_thisrun}.js" # needed for next two variables
         lunr_index_filepath = Path(dir_output) / lunr_index_filename # local filesystem
-        lunr_index_sitepath = '/'+lunr_index_filename # website
+        lunr_index_sitepath = config['root_directory']+lunr_index_filename # website
         lunr_posts_filename = f"lunr-posts-{timestamp_thisrun}.js" # needed for next two variables
         lunr_posts_filepath = Path(dir_output) / lunr_posts_filename # local filesystem
-        lunr_posts_sitepath = '/'+lunr_posts_filename # website
+        lunr_posts_sitepath = config['root_directory']+lunr_posts_filename # website
     else:
         # needed to feed to themes
         lunr_index_sitepath = ''
@@ -237,6 +239,7 @@ def main():
                     markdown_body = markdown.convert(markdown_text)
                     html = page.render(
                         build_time=build_time,
+                        root_directory=config['root_directory'],
                         wiki_title=config['wiki_title'],
                         author=config['author'],
                         repo=config['repo'],
@@ -285,14 +288,15 @@ def main():
                 print("lunr_posts=", posts, file=outfile)
 
         # and then the search javascript will do this:
-        #   <script src="/lunr-index-1656192217.474129.js"></script>
-        #   <script src="/lunr-posts-1656192217.474129.js"></script>
+        #   <script src="{{root_directory}}lunr-index-1656192217.474129.js"></script>
+        #   <script src="{{root_directory}}lunr-posts-1656192217.474129.js"></script>
         # and the variables `lunr_index` will contain the index, `lunr_posts` will contain the links+titles
 
         # temporary handling of search.html - TODO, do this better :-)
         search_page = j.get_template('search.html')
         html = search_page.render(
             build_time=build_time,
+            root_directory=config['root_directory'],
             wiki_title=config['wiki_title'],
             author=config['author'],
             repo=config['repo'],
@@ -327,6 +331,7 @@ def main():
             build_time=build_time,
             pages=all_pages,
             pages_chrono=all_pages_chrono,
+            root_directory=config['root_directory'],
             wiki_title=config['wiki_title'],
             author=config['author'],
             repo=config['repo'],
@@ -342,6 +347,7 @@ def main():
         html = j.get_template('recent-pages.html').render(
             build_time=build_time,
             pages=recent_pages,
+            root_directory=config['root_directory'],
             wiki_title=config['wiki_title'],
             author=config['author'],
             repo=config['repo'],
