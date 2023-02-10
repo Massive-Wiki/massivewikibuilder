@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v2.1.0 - https://github.com/peterkaminski/massivewikibuilder
+# Massive Wiki Builder v2.2.0 - https://github.com/peterkaminski/massivewikibuilder
 
 # set up logging
 import logging, os

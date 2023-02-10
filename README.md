@@ -204,5 +204,4 @@ MWB uses a simple theming system.  All the files for one theme are placed in a s
 
 MWB builds the pages with Jinja2, so you can use Jinja2 directives within the HTML files to include wiki metadata and wiki content.  You can also use the Jinja2 `include` functionality to extract reused parts of the page to HTML "partial" files.
 
-Themes are in a separate repo, [github/peterkaminski/massive-wiki-themes](https://github.com/peterkaminski/massive-wiki-themes).
-
+Themes are in a separate repo, [github/peterkaminski/massive-wiki-themes](https://github.com/peterkaminski/massive-wiki-themes). For Massive Wiki Builder v2.2.0, you should use Massive Wiki Themes version 2023-02-09-001 or later.
