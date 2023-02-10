@@ -156,6 +156,8 @@ def main():
 
     # get configuration
     config = load_config(args.config)
+    if not 'recent_changes_count' in config:
+        config['recent_changes_count'] = 5
 
     # remember paths
     dir_output = os.path.abspath(args.output)
@@ -338,7 +340,7 @@ def main():
 
         # build recent-pages.html
         logging.debug("build recent-pages.html")
-        recent_pages = all_pages_chrono[:5]
+        recent_pages = all_pages_chrono[:config['recent_changes_count']]
         html = j.get_template('recent-pages.html').render(
             build_time=build_time,
             pages=recent_pages,
