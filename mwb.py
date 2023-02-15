@@ -339,7 +339,7 @@ def main():
         (Path(dir_output) / "all-pages.html").write_text(html)
 
         # build recent-pages.html
-        logging.debug("build recent-pages.html")
+        logging.debug(f"build recent-pages.html with {config['recent_changes_count']} entries.")
         recent_pages = all_pages_chrono[:config['recent_changes_count']]
         html = j.get_template('recent-pages.html').render(
             build_time=build_time,
