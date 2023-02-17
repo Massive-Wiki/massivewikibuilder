@@ -193,6 +193,7 @@ def main():
             dirs[:]=[d for d in dirs if not d.startswith('.')]
             files=[f for f in files if not f.startswith('.')]
             readable_path = root[len(dir_wiki):]
+            logging.debug(f"readable_path={readable_path}")
             path = scrub_path(readable_path)
             for file in files:
                 if file in ['netlify.toml']:
