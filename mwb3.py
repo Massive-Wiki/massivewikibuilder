@@ -26,7 +26,7 @@ def main():
     rootdir = "/"
     
     # run through all files, construct wikilink dict, copy to output
-    allfiles = [f for f in glob.glob(f"{dir_wiki}/**/*", recursive=True, include_hidden=False)]
+    allfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
     for file in allfiles:
         print(file)
         print("key: ", Path(file).name)
