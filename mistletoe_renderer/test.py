@@ -4,11 +4,11 @@ from mistletoe import Document
 from massivewiki import MassiveWikiRenderer
 
 test_strings = [
-    [ '[[test]]', '<p><a class="wikilink" href="test">test</a></p>\n' ],
-    [ '[[test|test2]]', '<p><a class="wikilink" href="test2">test</a></p>\n' ],
-    [ '[[test| test2  ]]', '<p><a class="wikilink" href="test2">test</a></p>\n' ],
-    [ '[[test| test2  ]]', '<p><a class="wikilink" href="test2">test</a></p>\n' ],
-    [ '[[test|test2|test3]]', '<p><a class="wikilink" href="test2%7Ctest3">test</a></p>\n' ],
+    [ '[[test]]', '<p><a class="wikilink" href="/test">test</a></p>\n' ],
+    [ '[[test|test2]]', '<p><a class="wikilink" href="/test2">test</a></p>\n' ],
+    [ '[[test| test2  ]]', '<p><a class="wikilink" href="/test2">test</a></p>\n' ],
+    [ '[[test| test2  ]]', '<p><a class="wikilink" href="/test2">test</a></p>\n' ],
+    [ '[[test|test2|test3]]', '<p><a class="wikilink" href="/test2%7Ctest3">test</a></p>\n' ],
 ]
 
 for pair in test_strings:
