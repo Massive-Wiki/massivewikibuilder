@@ -1,19 +1,38 @@
 #!/usr/bin/env python
 
-import argparse
-import glob
-import os
-from pathlib import Path
-import re
+# Massive Wiki Builder v3.0.0
 
 # set up logging
-import logging
+import logging, os
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
+
+# python libraries
+import argparse
+import datetime
+import glob
+import json
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import time
+import traceback
+
+# pip install
+from dateutil.parser import parse # pip install python-dateutil
+import jinja2
+import yaml
 
 # set up argparse
 def init_argparse():
     parser = argparse.ArgumentParser(description='Generate HTML pages from Markdown wiki pages.')
+#    parser.add_argument('--config', '-c', required=True, help='path to YAML config file')
+#    parser.add_argument('--output', '-o', required=True, help='directory for output')
+#    parser.add_argument('--templates', '-t', required=True, help='directory for HTML templates')
     parser.add_argument('--wiki', '-w', required=True, help='directory containing wiki files (Markdown + other)')
+#    parser.add_argument('--lunr', action='store_true', help='include this to create lunr index (requires npm and lunr to be installed, read docs)')
+#    parser.add_argument('--commits', action='store_true', help='include this to read Git commit messages and times, for All Pages')
     return parser
 
 def main():
