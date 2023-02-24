@@ -35,6 +35,62 @@ def init_argparse():
 #    parser.add_argument('--commits', action='store_true', help='include this to read Git commit messages and times, for All Pages')
     return parser
 
+
+# set up a Jinja2 environment
+def jinja2_environment(path_to_templates):
+    return jinja2.Environment(
+        loader=jinja2.FileSystemLoader(path_to_templates)
+    )
+
+# load config file
+def load_config(path):
+    with open(path) as infile:
+        return yaml.safe_load(infile)
+
+# scrub wiki path to handle ' ', '_', '?', and '#' characters in wiki page names
+# change ' ', ?', and '#' to '_', because they're inconvenient in URLs
+def scrub_path(filepath):
+    return re.sub(r'([ _?\#]+)', '_', filepath)
+
+# take a path object pointing to a Markdown file
+# return Markdown (as string) and YAML front matter (as dict)
+# for YAML, {} = no front matter, False = YAML syntax error
+def read_markdown_and_front_matter(path):
+    with path.open() as infile:
+        lines = infile.readlines()
+    # take care to look exactly for two `---` lines with valid YAML in between
+    if lines and re.match(r'^---$',lines[0]):
+        count = 0
+        found_front_matter_end = False
+        for line in lines[1:]:
+            count += 1
+            if re.match(r'^---$',line):
+                found_front_matter_end = True
+                break;
+        if found_front_matter_end:
+            try:
+                front_matter = yaml.safe_load(''.join(lines[1:count]))
+            except yaml.parser.ParserError:
+                # return Markdown + False (YAML syntax error)
+                return ''.join(lines), False
+            # return Markdown + front_matter
+            return ''.join(lines[count+1:]), front_matter
+    # return Markdown + empty dict
+    return ''.join(lines), {}
+
+# read and convert Sidebar markdown to HTML
+def sidebar_convert_markdown(path):
+    if path.exists():
+        markdown_text, front_matter = read_markdown_and_front_matter(path)
+    else:
+        markdown_text = ''
+    return markdown.convert(markdown_text)
+
+# handle datetime.date serialization for json.dumps()
+def datetime_date_serializer(o):
+    if isinstance(o, datetime.date):
+        return o.isoformat()
+
 def main():
     argparser = init_argparse();
     args = argparser.parse_args();
@@ -44,6 +100,8 @@ def main():
     print(dir_wiki)
     rootdir = "/"
     
+    # read wiki content and build wikilinks, lunr index lists, and all_pages list    
+
     # run through all files, construct wikilink dict, copy to output
     allfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
     for file in allfiles:
