@@ -27,12 +27,12 @@ import yaml
 # set up argparse
 def init_argparse():
     parser = argparse.ArgumentParser(description='Generate HTML pages from Markdown wiki pages.')
-#    parser.add_argument('--config', '-c', required=True, help='path to YAML config file')
-#    parser.add_argument('--output', '-o', required=True, help='directory for output')
-#    parser.add_argument('--templates', '-t', required=True, help='directory for HTML templates')
+    parser.add_argument('--config', '-c', required=True, help='path to YAML config file')
+    parser.add_argument('--output', '-o', required=True, help='directory for output')
+    parser.add_argument('--templates', '-t', required=True, help='directory for HTML templates')
     parser.add_argument('--wiki', '-w', required=True, help='directory containing wiki files (Markdown + other)')
-#    parser.add_argument('--lunr', action='store_true', help='include this to create lunr index (requires npm and lunr to be installed, read docs)')
-#    parser.add_argument('--commits', action='store_true', help='include this to read Git commit messages and times, for All Pages')
+    parser.add_argument('--lunr', action='store_true', help='include this to create lunr index (requires npm and lunr to be installed, read docs)')
+    parser.add_argument('--commits', action='store_true', help='include this to read Git commit messages and times, for All Pages')
     return parser
 
 
@@ -92,29 +92,80 @@ def datetime_date_serializer(o):
         return o.isoformat()
 
 def main():
-    argparser = init_argparse();
-    args = argparser.parse_args();
+    logging.debug("Initializing")
+    
+    argparser = init_argparse()
+    args = argparser.parse_args()
+    logging.debug("args: %s", args)
+
+    # get configuration
+    config = load_config(args.config)
+    if not 'recent_changes_count' in config:
+        config['recent_changes_count'] = 5
 
     # remember paths
+    dir_output = Path(args.output).resolve().as_posix()
+    dir_templates = Path(args.templates).resolve().as_posix()
     dir_wiki = Path(args.wiki).resolve().as_posix()
-    print(dir_wiki)
-    rootdir = "/"
-    
-    # read wiki content and build wikilinks, lunr index lists, and all_pages list    
+    rootdir = '/'
 
-    # run through all files, construct wikilink dict, copy to output
-    allfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
-    for file in allfiles:
-        print(file)
-        print("key: ", Path(file).name)
-        print("web path: ", re.sub(r'([ _?\#]+)', '_', rootdir+Path(file).relative_to(dir_wiki).with_suffix(".html").as_posix()), "\n")
+    # get a Jinja2 environment
+    j = jinja2_environment(dir_templates)
+
+    # set up lunr_index_filename and lunr_index_sitepath
+    if (args.lunr):
+        timestamp_thisrun = time.time()
+        lunr_index_filename = f"lunr-index-{timestamp_thisrun}.js" # needed for next two variables
+        lunr_index_filepath = Path(dir_output) / lunr_index_filename # local filesystem
+        lunr_index_sitepath = '/'+lunr_index_filename # website
+        lunr_posts_filename = f"lunr-posts-{timestamp_thisrun}.js" # needed for next two variables
+        lunr_posts_filepath = Path(dir_output) / lunr_posts_filename # local filesystem
+        lunr_posts_sitepath = '/'+lunr_posts_filename # website
+    else:
+        # needed to feed to themes
+        lunr_index_sitepath = ''
+        lunr_posts_sitepath = ''
+
+    # render the wiki
+    try:
+        # remove existing output directory and recreate
+        logging.debug("remove existing output directory and recreate")
+#        shutil.rmtree(dir_output, ignore_errors=True)
+#        os.mkdir(dir_output)
+    
+        # read wiki content and build wikilinks, lunr index lists, and all_pages list    
+        wikilinks = {}
+        all_pages = []
+        lunr_idx_data=[]
+        lunr_posts=[]
+
+        # run through all files, construct wikilink dict, copy to output
+        allfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
+        for f in allfiles:
+            logging.debug("file %s: ", f)
+            if Path(f).suffix == '.md':
+                print("key: ", Path(f).name)
+                print("web path: ", \
+                      re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).with_suffix(".html").as_posix()), "\n")
+                # append path and link to wikilinks dict
+                # add lunr data to lunr idx_data and posts lists
+                # add wikipage to all_pages list
+            else:
+                print("key: ", Path(f).name)
+                print("web path: ", \
+                      re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).as_posix()), "\n")
+                # add path and link to wikilinks dict
+
         # shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
 
-    # render all the Markdown files
-    mdfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.md", recursive=True, include_hidden=False)] # TODO: consider adding .txt
-    for mdfile in mdfiles:
-        pass
-#        print(f"Rendering {mdfile}")
+        # render all the Markdown files
+        for f in allfiles:
+            if Path(f).suffix == '.md':
+                print(f"Rendering {f}")
+    
+
+    except Exception as e:
+        traceback.print_exc(e)
 
 if __name__ == "__main__":
     exit(main())
