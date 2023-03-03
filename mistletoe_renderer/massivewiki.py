@@ -43,7 +43,7 @@ class MassiveWikiRenderer(HTMLRenderer):
 
     def render_massive_wiki(self, token):
         template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
-        target = self.escape_url(token.target)
+        target = token.target
         inner = self.render_inner(token)
         self._links.append(target)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
