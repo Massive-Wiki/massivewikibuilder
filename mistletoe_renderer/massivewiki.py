@@ -5,7 +5,7 @@ Massive Wiki support for mistletoe.
 import re
 from mistletoe.span_token import SpanToken
 from mistletoe.html_renderer import HTMLRenderer
-
+from pathlib import Path
 
 __all__ = ['MassiveWiki', 'MassiveWikiRenderer']
 
@@ -32,10 +32,11 @@ class MassiveWikiRenderer(HTMLRenderer):
     Properties:
         links (array of strings, read-only): all of the double square bracket link targets found in this invocation.
     """
-    def __init__(self, rootdir='/'):
+    def __init__(self, rootdir='/', wikilinks={}):
         super().__init__(MassiveWiki)
         self._links = []
         self._rootdir = rootdir
+        self._wikilinks = wikilinks
 
     @property
     def links(self):
@@ -44,6 +45,13 @@ class MassiveWikiRenderer(HTMLRenderer):
     def render_massive_wiki(self, token):
         template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         target = token.target
-        inner = self.render_inner(token)
+        value = self._wikilinks.get(target, "nada")
+        if value != "nada":
+            print(value)
+            inner = value.strip("/")
+            if Path(value).suffix == '.md':
+                inner = Path(value).relative_to(self._rootdir).with_suffix('.html').as_posix()
+        else:
+            inner = self.render_inner(token)
         self._links.append(target)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
