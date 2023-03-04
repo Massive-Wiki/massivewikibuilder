@@ -1,6 +1,9 @@
 """
 Massive Wiki support for mistletoe.
 """
+# set up logging
+import logging, os
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
 
 import re
 from mistletoe.span_token import SpanToken
@@ -45,13 +48,15 @@ class MassiveWikiRenderer(HTMLRenderer):
     def render_massive_wiki(self, token):
         template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         target = token.target
-        value = self._wikilinks.get(target, "nada")
+        logging.info("target (aka key): %s", token.target)
+        value = self._wikilinks.get(Path(target).name, "nada")
         if value != "nada":
-            print(value)
-            inner = value.strip("/")
+            logging.info("value: %s", value)
+            inner = Path(value).relative_to(self._rootdir).as_posix()
             if Path(value).suffix == '.md':
                 inner = Path(value).relative_to(self._rootdir).with_suffix('.html').as_posix()
         else:
             inner = self.render_inner(token)
+        logging.info("inner: %s", inner)
         self._links.append(target)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
