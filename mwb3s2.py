@@ -200,6 +200,20 @@ def main():
         os.mkdir(dir_output)
 
         # generate dict of filenames and their wikipaths
+        mdfiles = ["/"+Path(f).relative_to(dir_wiki).as_posix() for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
+        print("\n")
+        print(len(mdfiles), mdfiles)
+        wikifiledict = {}
+        for mdfile in mdfiles:
+            clean_name = scrub_path(mdfile)
+            logging.info("mdfile, clean_name: %s, %s", mdfile, clean_name)
+            if '.md' == Path(mdfile).suffix.lower():
+                wikifiledict[Path(mdfile).stem] = f"{clean_name}"
+            else:
+                wikifiledict[Path(mdfile).name] = f"{clean_name}"
+        print("len(wikifiledict): ", len(wikifiledict))
+        logging.info("wikifiledict: %s", wikifiledict)
+        
         for root,dirs,files in os.walk(dir_wiki):
             dirs[:]=[d for d in dirs if not d.startswith('.')]
             files=[f for f in files if not f.startswith('.')]
@@ -214,7 +228,11 @@ def main():
                     wikifiles[Path(file).stem] = f"{path}/{clean_name}"
                 else:
                     wikifiles[Path(file).name] = f"{path}/{clean_name}"
+        print("len(wikifiles): ", len(wikifiles))
         logging.debug("wikifiles: %s", wikifiles)
+
+        difference = set(wikifiledict.items()) ^ set(wikifiles.items())
+        logging.info("difference? %s", difference)
         # copy wiki to output; render .md files to HTML
         logging.debug("copy wiki to output; render .md files to HTML")
         all_pages = []
