@@ -49,9 +49,9 @@ class MassiveWikiRenderer(HTMLRenderer):
         template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         target = token.target
         logging.info("target (aka key): %s", token.target)
-        value = self._wikilinks.get(Path(target).name, "nada")
-        if value != "nada":
-            logging.info("value: %s", value)
+        value = self._wikilinks.get(Path(target).name, None)
+        logging.info("value: %s", value)
+        if value:
             inner = Path(value).relative_to(self._rootdir).as_posix()
             if Path(value).suffix == '.md':
                 inner = Path(value).relative_to(self._rootdir).with_suffix('.html').as_posix()
