@@ -48,15 +48,16 @@ class MassiveWikiRenderer(HTMLRenderer):
     def render_massive_wiki(self, token):
         template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         target = token.target
-        logging.info("target (aka key): %s", token.target)
-        value = self._wikilinks.get(Path(target).name, None)
-        logging.info("value: %s", value)
-        if value:
-            inner = Path(value).relative_to(self._rootdir).as_posix()
-            if Path(value).suffix == '.md':
-                inner = Path(value).relative_to(self._rootdir).with_suffix('.html').as_posix()
+        logging.debug("inner(token): %s", self.render_inner(token))
+        wikilink_key = Path(self.render_inner(token)).name
+        wikilink_value = self._wikilinks.get(wikilink_key, None)
+        logging.info("wikilink_value: %s", wikilink_value)
+        if wikilink_value:
+            inner = Path(wikilink_value).relative_to(self._rootdir).as_posix()
+            if Path(wikilink_value).suffix == '.md':
+                inner = Path(wikilink_value).relative_to(self._rootdir).with_suffix('.html').as_posix()
         else:
             inner = self.render_inner(token)
-        logging.info("inner: %s", inner)
+        logging.debug("inner: %s", inner)
         self._links.append(target)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)

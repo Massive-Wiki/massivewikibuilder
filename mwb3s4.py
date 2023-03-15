@@ -160,17 +160,16 @@ def main():
         shutil.rmtree(dir_output, ignore_errors=True)
         os.mkdir(dir_output)
 
-        # generate dict of filenames and their wikipaths
-        mdfiles = ["/"+Path(f).relative_to(dir_wiki).as_posix() for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
-        print("\n")
-        print(len(mdfiles), mdfiles)
-        for mdfile in mdfiles:
-            clean_name = scrub_path(mdfile)
-            logging.info("mdfile, clean_name: %s, %s", mdfile, clean_name)
-            if '.md' == Path(mdfile).suffix.lower():
-                wikifiles[Path(mdfile).stem] = f"{clean_name}"
+        # generate dictionary of filenames and their wikipaths
+        allfiles = ["/"+Path(f).relative_to(dir_wiki).as_posix() for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
+        logging.debug("len(allfiles), allfiles: %s, %s", str(len(allfiles)), allfiles)
+        for wfile in allfiles:
+            clean_name = scrub_path(wfile)
+            logging.debug("wfile, clean_name: %s, %s", wfile, clean_name)
+            if '.md' == Path(wfile).suffix.lower():
+                wikifiles[Path(wfile).stem] = f"{clean_name}"
             else:
-                wikifiles[Path(mdfile).name] = f"{clean_name}"
+                wikifiles[Path(wfile).name] = f"{clean_name}"
         print("len(wikifiles): ", len(wikifiles))
         logging.info("wikifiles: %s", wikifiles)
         
