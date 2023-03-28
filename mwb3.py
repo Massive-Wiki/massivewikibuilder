@@ -24,6 +24,10 @@ from dateutil.parser import parse # pip install python-dateutil
 import jinja2
 import yaml
 
+# markdown processing
+from mistletoe import Document
+from mistletoe_renderer.massivewiki import MassiveWikiRenderer
+
 # set up argparse
 def init_argparse():
     parser = argparse.ArgumentParser(description='Generate HTML pages from Markdown wiki pages.')
@@ -34,7 +38,6 @@ def init_argparse():
     parser.add_argument('--lunr', action='store_true', help='include this to create lunr index (requires npm and lunr to be installed, read docs)')
     parser.add_argument('--commits', action='store_true', help='include this to read Git commit messages and times, for All Pages')
     return parser
-
 
 # set up a Jinja2 environment
 def jinja2_environment(path_to_templates):
@@ -51,6 +54,7 @@ def load_config(path):
 # change ' ', ?', and '#' to '_', because they're inconvenient in URLs
 def scrub_path(filepath):
     return re.sub(r'([ _?\#]+)', '_', filepath)
+
 
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
@@ -78,13 +82,18 @@ def read_markdown_and_front_matter(path):
     # return Markdown + empty dict
     return ''.join(lines), {}
 
+# mistletoe based Markdown to HTML conversion -- WIKILINKS NOT YET WORKING
+def markdown_convert(markdown_text):
+    with MassiveWikiRenderer() as renderer:
+        return renderer.render(Document(markdown_text))
+
 # read and convert Sidebar markdown to HTML
 def sidebar_convert_markdown(path):
     if path.exists():
         markdown_text, front_matter = read_markdown_and_front_matter(path)
     else:
         markdown_text = ''
-    return markdown.convert(markdown_text)
+    return markdown_convert(markdown_text)
 
 # handle datetime.date serialization for json.dumps()
 def datetime_date_serializer(o):
@@ -136,11 +145,12 @@ def main():
         # read wiki content and build wikilinks, lunr index lists, and all_pages list    
         wikilinks = {}
         all_pages = []
-        lunr_idx_data=[]
-        lunr_posts=[]
+        if(args.lunr):
+            lunr_idx_data=[]
+            lunr_posts=[]
 
         # run through all files, construct wikilink dict, copy to output
-        allfiles = [f for f in glob.glob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
+        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
         for f in allfiles:
             logging.debug("file %s: ", f)
             if Path(f).suffix == '.md':
@@ -148,13 +158,17 @@ def main():
                 print("web path: ", \
                       re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).with_suffix(".html").as_posix()), "\n")
                 # append path and link to wikilinks dict
+                # wikilinks[Path(f).stem] = web_path to html goes here
                 # add lunr data to lunr idx_data and posts lists
+                if(args.lunr):
+                    pass
                 # add wikipage to all_pages list
             else:
                 print("key: ", Path(f).name)
                 print("web path: ", \
                       re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).as_posix()), "\n")
                 # add path and link to wikilinks dict
+                # wikilinks[Path(f).name] = web_path to f goes here
 
         # shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
 
@@ -162,8 +176,12 @@ def main():
         for f in allfiles:
             if Path(f).suffix == '.md':
                 print(f"Rendering {f}")
-    
 
+        # done
+        logging.debug("done")
+    
+    except FileNotFoundError as e:
+        print(f"\n{e}\n\nCheck that arguments specify valid files and directories.\n")
     except Exception as e:
         traceback.print_exc(e)
 
