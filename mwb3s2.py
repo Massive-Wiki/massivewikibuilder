@@ -231,8 +231,8 @@ def main():
         print("len(wikifiles): ", len(wikifiles))
         logging.debug("wikifiles: %s", wikifiles)
 
-        difference = set(wikifiledict.items()) ^ set(wikifiles.items())
-        logging.info("difference? %s", difference)
+#        difference = set(wikifiledict.items()) ^ set(wikifiles.items())
+#        logging.info("difference? %s", difference)
         # copy wiki to output; render .md files to HTML
         logging.debug("copy wiki to output; render .md files to HTML")
         all_pages = []
