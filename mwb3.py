@@ -150,26 +150,27 @@ def main():
             lunr_posts=[]
 
         # run through all files, construct wikilink dict, copy to output
+        # build list of files using a glob.iglob iterator
         allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
         for f in allfiles:
             logging.debug("file %s: ", f)
             if Path(f).suffix == '.md':
                 print("key: ", Path(f).name)
-                print("web path: ", \
-                      re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).with_suffix(".html").as_posix()), "\n")
+                html_path = re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).with_suffix(".html").as_posix())
+                print("html path: ", html_path, "\n")
                 # append path and link to wikilinks dict
-                # wikilinks[Path(f).stem] = web_path to html goes here
+                wikilinks[Path(f).stem] = html_path
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     pass
                 # add wikipage to all_pages list
             else:
                 print("key: ", Path(f).name)
-                print("web path: ", \
-                      re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).as_posix()), "\n")
+                html_path = re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).as_posix())
+                print("html path: ", html_path, "\n")
                 # add path and link to wikilinks dict
-                # wikilinks[Path(f).name] = web_path to f goes here
-
+                wikilinks[Path(f).name] = html_path
+        logging.debug("wikilinks: %s", wikilinks)
         # shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
 
         # render all the Markdown files
