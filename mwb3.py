@@ -139,18 +139,16 @@ def main():
     try:
         # remove existing output directory and recreate
         logging.debug("remove existing output directory and recreate")
-#        shutil.rmtree(dir_output, ignore_errors=True)
-#        os.mkdir(dir_output)
+        shutil.rmtree(dir_output, ignore_errors=True)
+        os.mkdir(dir_output)
     
-        # read wiki content and build wikilinks, lunr index lists, and all_pages list    
+        # read wiki content and build wikilinks dictionary; lunr index lists
         wikilinks = {}
-        all_pages = []
         if(args.lunr):
             lunr_idx_data=[]
             lunr_posts=[]
-
-        # run through all files, construct wikilink dict, copy to output
-        # build list of files using a glob.iglob iterator
+        
+        # get list of files using a glob.iglob iterator (consumed in list comprehension)
         allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
         for f in allfiles:
             logging.debug("file %s: ", f)
@@ -171,12 +169,79 @@ def main():
                 # add path and link to wikilinks dict
                 wikilinks[Path(f).name] = html_path
         logging.debug("wikilinks: %s", wikilinks)
-        # shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
 
         # render all the Markdown files
-        for f in allfiles:
-            if Path(f).suffix == '.md':
-                print(f"Rendering {f}")
+        logging.debug("copy wiki to output; render .md files to HTML")
+        all_pages = []
+        page = j.get_template('page.html')
+        build_time = datetime.datetime.now(datetime.timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
+
+        if 'sidebar' in config:
+            sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'])
+        else:
+            sidebar_body = ''
+
+        for file in allfiles:
+            if Path(file).suffix == '.md':
+                print(f"Rendering {file}")
+            # get commit message and time
+            if args.commits:
+                p = subprocess.run(["git", "-C", Path(root), "log", "-1", '--pretty="%cI\t%an\t%s"', file], capture_output=True, check=True)
+                (date,author,change)=p.stdout.decode('utf-8')[1:-2].split('\t',2)
+                date = parse(date).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d, %H:%M")
+            else:
+                date = ''
+                change = ''
+                author = ''
+
+            # remember this page for All Pages
+            all_pages.append({
+                'title':Path(file).stem,
+                'path':"/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix()),
+                'date':date,
+                'change':change,
+                'author':author,
+            })
+            # copy all original files
+            date,change,author = '','','' # MWB3 TESTING PHASE ONLY
+            logging.debug("Copy all original files")
+            logging.debug("%s -->  %s",Path(file), Path(dir_output+(scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix()))))
+            os.makedirs(Path(dir_output+(scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix()))).parent, exist_ok=True)
+            shutil.copy(Path(file), Path(dir_output+(scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix()))))
+#            shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
+
+        # copy README.html to index.html if no index.html
+        logging.debug("copy README.html to index.html if no index.html")
+#        if not os.path.exists(Path(dir_output) / 'index.html'):
+#            shutil.copyfile(Path(dir_output) / 'README.html', Path(dir_output) / 'index.html')
+
+        # copy static assets directory
+        logging.debug("copy static assets directory")
+        if os.path.exists(Path(dir_templates) / 'mwb-static'):
+            logging.warning("mwb-static is deprecated. please use 'static', and put mwb-static inside static - see docs")
+            shutil.copytree(Path(dir_templates) / 'mwb-static', Path(dir_output) / 'mwb-static')
+        if os.path.exists(Path(dir_templates) / 'static'):
+            shutil.copytree(Path(dir_templates) / 'static', Path(dir_output), dirs_exist_ok=True)
+
+        # build all-pages.html
+        logging.debug("build all-pages.html")
+        if args.commits:
+            all_pages_chrono = sorted(all_pages, key=lambda i: i['date'], reverse=True)
+        else:
+            all_pages_chrono = ''
+        all_pages = sorted(all_pages, key=lambda i: i['title'].lower())
+        html = j.get_template('all-pages.html').render(
+            build_time=build_time,
+            pages=all_pages,
+            pages_chrono=all_pages_chrono,
+            wiki_title=config['wiki_title'],
+            author=config['author'],
+            repo=config['repo'],
+            license=config['license'],
+            lunr_index_sitepath=lunr_index_sitepath,
+            lunr_posts_sitepath=lunr_posts_sitepath,
+        )
+        (Path(dir_output) / "all-pages.html").write_text(html)
 
         # done
         logging.debug("done")
