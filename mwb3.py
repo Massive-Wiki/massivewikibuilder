@@ -24,9 +24,14 @@ from dateutil.parser import parse # pip install python-dateutil
 import jinja2
 import yaml
 
-# markdown processing
+# mistletoe based Markdown to HTML conversion
 from mistletoe import Document
 from mistletoe_renderer.massivewiki import MassiveWikiRenderer
+
+wikilinks = {}
+def markdown_convert(markdown_text):
+    with MassiveWikiRenderer(rootdir='/',wikilinks=wikilinks) as renderer:
+        return renderer.render(Document(markdown_text))
 
 # set up argparse
 def init_argparse():
@@ -80,12 +85,6 @@ def read_markdown_and_front_matter(path):
             return ''.join(lines[count+1:]), front_matter
     # return Markdown + empty dict
     return ''.join(lines), {}
-
-# mistletoe based Markdown to HTML conversion
-wikilinks = {}
-def markdown_convert(markdown_text):
-    with MassiveWikiRenderer(rootdir='/',wikilinks=wikilinks) as renderer:
-        return renderer.render(Document(markdown_text))
 
 # read and convert Sidebar markdown to HTML
 def sidebar_convert_markdown(path):
@@ -160,7 +159,10 @@ def main():
                 wikilinks[Path(file).stem] = html_path
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
-                    pass
+                    link = "/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix())
+                    title = Path(file).stem
+                    lunr_idx_data.append({"link":link, "title":title, "body": Path(file).read_text()})
+                    lunr_posts.append({"link":link, "title":title})
                 # add wikipage to all_pages list
             else:
                 print("key: ", Path(file).name)
@@ -169,6 +171,7 @@ def main():
                 # add path and link to wikilinks dict
                 wikilinks[Path(file).name] = html_path
         logging.debug("wikilinks: %s", wikilinks)
+        logging.debug("lunr index length %s: ",len(lunr_idx_data))
 
         # render all the Markdown files
         logging.debug("copy wiki to output; render .md files to HTML")
@@ -235,10 +238,31 @@ def main():
             logging.debug("%s -->  %s",Path(file), Path(dir_output+clean_filepath))
             shutil.copy(Path(file), Path(dir_output+clean_filepath))
 
-        # copy README.html to index.html if no index.html
-        logging.debug("copy README.html to index.html if no index.html")
-        if not os.path.exists(Path(dir_output) / 'index.html'):
-            shutil.copyfile(Path(dir_output) / 'README.html', Path(dir_output) / 'index.html')
+        # build Lunr search index if --lunr
+        if (args.lunr):
+            logging.debug("building lunr index: %s", lunr_index_filepath)
+            # ref: https://lunrjs.com/guides/index_prebuilding.html
+            pages_index_bytes = json.dumps(lunr_idx_data).encode('utf-8') # NOTE: build-index.js requires text as input - convert dict to string (then do encoding to bytes either here or set `encoding` in subprocess.run())
+            with open(lunr_index_filepath, "w") as outfile:
+                print("lunr_index=", end="", file=outfile)
+                outfile.seek(0, 2) # seek to EOF
+                p = subprocess.run(['node', 'build-index.js'], input=pages_index_bytes, stdout=outfile, check=True)
+            with open(lunr_posts_filepath, "w") as outfile:
+                print("lunr_posts=", lunr_posts, file=outfile)
+
+        # temporary handling of search.html - TODO, do this better :-)
+        search_page = j.get_template('search.html')
+        html = search_page.render(
+            build_time=build_time,
+            wiki_title=config['wiki_title'],
+            author=config['author'],
+            repo=config['repo'],
+            license=config['license'],
+            sidebar_body=sidebar_body,
+            lunr_index_sitepath=lunr_index_sitepath,
+            lunr_posts_sitepath=lunr_posts_sitepath,
+        )
+        (Path(dir_output) / "search.html").write_text(html)
 
         # copy static assets directory
         logging.debug("copy static assets directory")
