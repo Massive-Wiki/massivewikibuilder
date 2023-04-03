@@ -140,14 +140,15 @@ def main():
         logging.debug("remove existing output directory and recreate")
         shutil.rmtree(dir_output, ignore_errors=True)
         os.mkdir(dir_output)
+        
+        # get list of wiki files using a glob.iglob iterator (consumed in list comprehension)
+        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
     
         # read wiki content and build wikilinks dictionary; lunr index lists
         if(args.lunr):
             lunr_idx_data=[]
             lunr_posts=[]
-        
-        # get list of wiki files using a glob.iglob iterator (consumed in list comprehension)
-        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
+
         for file in allfiles:
             logging.debug("file %s: ", file)
             clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
@@ -227,7 +228,7 @@ def main():
                 # remember this page for All Pages
                 all_pages.append({
                     'title':Path(file).stem,
-                    'path':"/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix()),
+                    'path':Path(clean_filepath).with_suffix(".html").as_posix(),
                     'date':date,
                     'change':change,
                     'author':author,
