@@ -55,7 +55,6 @@ def load_config(path):
 def scrub_path(filepath):
     return re.sub(r'([ _?\#]+)', '_', filepath)
 
-
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
 # for YAML, {} = no front matter, False = YAML syntax error
@@ -82,14 +81,11 @@ def read_markdown_and_front_matter(path):
     # return Markdown + empty dict
     return ''.join(lines), {}
 
-# mistletoe based Markdown to HTML conversion -- WIKILINKS NOT YET WORKING
+# mistletoe based Markdown to HTML conversion
+wikilinks = {}
 def markdown_convert(markdown_text):
     with MassiveWikiRenderer(rootdir='/',wikilinks=wikilinks) as renderer:
         return renderer.render(Document(markdown_text))
-
-#def markdown_convert(markdown_text):
-#    with MassiveWikiRenderer() as renderer:
-#        return renderer.render(Document(markdown_text))
 
 # read and convert Sidebar markdown to HTML
 def sidebar_convert_markdown(path):
@@ -103,8 +99,6 @@ def sidebar_convert_markdown(path):
 def datetime_date_serializer(o):
     if isinstance(o, datetime.date):
         return o.isoformat()
-
-wikilinks ={}
 
 def main():
     logging.debug("Initializing")
@@ -149,31 +143,31 @@ def main():
         os.mkdir(dir_output)
     
         # read wiki content and build wikilinks dictionary; lunr index lists
-#        wikilinks = {}
         if(args.lunr):
             lunr_idx_data=[]
             lunr_posts=[]
         
-        # get list of files using a glob.iglob iterator (consumed in list comprehension)
+        # get list of wiki files using a glob.iglob iterator (consumed in list comprehension)
         allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
-        for f in allfiles:
-            logging.debug("file %s: ", f)
-            if Path(f).suffix == '.md':
-                print("key: ", Path(f).name)
-                html_path = re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).with_suffix(".html").as_posix())
+        for file in allfiles:
+            logging.debug("file %s: ", file)
+            clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
+            if Path(file).suffix == '.md':
+                print("key: ", Path(file).name)
+                html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 print("html path: ", html_path, "\n")
                 # append path and link to wikilinks dict
-                wikilinks[Path(f).stem] = html_path
+                wikilinks[Path(file).stem] = html_path
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     pass
                 # add wikipage to all_pages list
             else:
-                print("key: ", Path(f).name)
-                html_path = re.sub(r'([ _?\#]+)', '_', rootdir+Path(f).relative_to(dir_wiki).as_posix())
+                print("key: ", Path(file).name)
+                html_path = clean_filepath
                 print("html path: ", html_path, "\n")
                 # add path and link to wikilinks dict
-                wikilinks[Path(f).name] = html_path
+                wikilinks[Path(file).name] = html_path
         logging.debug("wikilinks: %s", wikilinks)
 
         # render all the Markdown files
@@ -219,7 +213,8 @@ def main():
                 
                 # get commit message and time
                 if args.commits:
-                    p = subprocess.run(["git", "-C", Path(root), "log", "-1", '--pretty="%cI\t%an\t%s"', file], capture_output=True, check=True)
+                    root = Path(file).parent.as_posix()
+                    p = subprocess.run(["git", "-C", Path(root), "log", "-1", '--pretty="%cI\t%an\t%s"', Path(file).name], capture_output=True, check=True)
                     (date,author,change)=p.stdout.decode('utf-8')[1:-2].split('\t',2)
                     date = parse(date).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d, %H:%M")
                 else:
@@ -227,16 +222,15 @@ def main():
                     change = ''
                     author = ''
 
-                    # remember this page for All Pages
-                    all_pages.append({
-                        'title':Path(file).stem,
-                        'path':"/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix()),
-                        'date':date,
-                        'change':change,
-                        'author':author,
-                    })
+                # remember this page for All Pages
+                all_pages.append({
+                    'title':Path(file).stem,
+                    'path':"/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix()),
+                    'date':date,
+                    'change':change,
+                    'author':author,
+                })
             # copy all original files
-            date,change,author = '','','' # MWB3 TESTING PHASE ONLY
             logging.debug("Copy all original files")
             logging.debug("%s -->  %s",Path(file), Path(dir_output+clean_filepath))
             shutil.copy(Path(file), Path(dir_output+clean_filepath))
@@ -276,7 +270,16 @@ def main():
 
         # done
         logging.debug("done")
-    
+
+    except subprocess.CalledProcessError as e:
+        print(f"\nERROR: '{e.cmd[0]}' returned error code {e.returncode}.")
+        print(f"Output was '{e.output}'")
+        if e.cmd[0] == 'node':
+            print(f"\nYou may need to install Node modules with 'npm ci'.\n")
+        if e.cmd[0] == 'git':
+            print(f"\nThere was a problem with Git.\n")
+    except jinja2.exceptions.TemplateNotFound as e:
+        print(f"\nCan't find template '{e}'.\n\nTheme or files in theme appear to be missing, or theme argument set incorrectly.\n")
     except FileNotFoundError as e:
         print(f"\n{e}\n\nCheck that arguments specify valid files and directories.\n")
     except Exception as e:
