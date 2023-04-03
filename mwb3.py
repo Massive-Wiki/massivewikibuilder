@@ -296,6 +296,22 @@ def main():
         )
         (Path(dir_output) / "all-pages.html").write_text(html)
 
+        # build recent-pages.html
+        logging.debug(f"build recent-pages.html with {config['recent_changes_count']} entries.")
+        recent_pages = all_pages_chrono[:config['recent_changes_count']]
+        html = j.get_template('recent-pages.html').render(
+            build_time=build_time,
+            pages=recent_pages,
+            wiki_title=config['wiki_title'],
+            author=config['author'],
+            repo=config['repo'],
+            license=config['license'],
+            sidebar_body=sidebar_body,
+            lunr_index_sitepath=lunr_index_sitepath,
+            lunr_posts_sitepath=lunr_posts_sitepath,
+        )
+        (Path(dir_output) / "recent-pages.html").write_text(html)
+
         # done
         logging.debug("done")
 
