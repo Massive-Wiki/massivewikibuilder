@@ -84,8 +84,12 @@ def read_markdown_and_front_matter(path):
 
 # mistletoe based Markdown to HTML conversion -- WIKILINKS NOT YET WORKING
 def markdown_convert(markdown_text):
-    with MassiveWikiRenderer() as renderer:
+    with MassiveWikiRenderer(rootdir='/',wikilinks=wikilinks) as renderer:
         return renderer.render(Document(markdown_text))
+
+#def markdown_convert(markdown_text):
+#    with MassiveWikiRenderer() as renderer:
+#        return renderer.render(Document(markdown_text))
 
 # read and convert Sidebar markdown to HTML
 def sidebar_convert_markdown(path):
@@ -99,6 +103,8 @@ def sidebar_convert_markdown(path):
 def datetime_date_serializer(o):
     if isinstance(o, datetime.date):
         return o.isoformat()
+
+wikilinks ={}
 
 def main():
     logging.debug("Initializing")
@@ -143,7 +149,7 @@ def main():
         os.mkdir(dir_output)
     
         # read wiki content and build wikilinks dictionary; lunr index lists
-        wikilinks = {}
+#        wikilinks = {}
         if(args.lunr):
             lunr_idx_data=[]
             lunr_posts=[]
@@ -182,38 +188,63 @@ def main():
             sidebar_body = ''
 
         for file in allfiles:
+            # TODO: refactor Path(file) --? used in several places
+            clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
+            # make needed subdirectories
+            os.makedirs(Path(dir_output+clean_filepath).parent, exist_ok=True)
             if Path(file).suffix == '.md':
                 print(f"Rendering {file}")
-            # get commit message and time
-            if args.commits:
-                p = subprocess.run(["git", "-C", Path(root), "log", "-1", '--pretty="%cI\t%an\t%s"', file], capture_output=True, check=True)
-                (date,author,change)=p.stdout.decode('utf-8')[1:-2].split('\t',2)
-                date = parse(date).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d, %H:%M")
-            else:
-                date = ''
-                change = ''
-                author = ''
+                # parse Markdown file
+                markdown_text, front_matter = read_markdown_and_front_matter(Path(file))
+                if front_matter is False:
+                    print(f"NOTE: YAML syntax error in front matter of '{Path(file)}'")
+                    front_matter = {}
+                # output JSON of front matter
+                (Path(dir_output+clean_filepath).with_suffix(".json")).write_text(json.dumps(front_matter, indent=2, default=datetime_date_serializer))
+                # render and output HTML
+                markdown_body = markdown_convert(markdown_text)
+                html = page.render(
+                    build_time=build_time,
+                    wiki_title=config['wiki_title'],
+                    author=config['author'],
+                    repo=config['repo'],
+                    license=config['license'],
+                    title=Path(file).stem,
+                    markdown_body=markdown_body,
+                    sidebar_body=sidebar_body,
+                    lunr_index_sitepath=lunr_index_sitepath,
+                    lunr_posts_sitepath=lunr_posts_sitepath,
+                )
+                (Path(dir_output+clean_filepath).with_suffix(".html")).write_text(html)
+                
+                # get commit message and time
+                if args.commits:
+                    p = subprocess.run(["git", "-C", Path(root), "log", "-1", '--pretty="%cI\t%an\t%s"', file], capture_output=True, check=True)
+                    (date,author,change)=p.stdout.decode('utf-8')[1:-2].split('\t',2)
+                    date = parse(date).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d, %H:%M")
+                else:
+                    date = ''
+                    change = ''
+                    author = ''
 
-            # remember this page for All Pages
-            all_pages.append({
-                'title':Path(file).stem,
-                'path':"/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix()),
-                'date':date,
-                'change':change,
-                'author':author,
-            })
+                    # remember this page for All Pages
+                    all_pages.append({
+                        'title':Path(file).stem,
+                        'path':"/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix()),
+                        'date':date,
+                        'change':change,
+                        'author':author,
+                    })
             # copy all original files
             date,change,author = '','','' # MWB3 TESTING PHASE ONLY
             logging.debug("Copy all original files")
-            logging.debug("%s -->  %s",Path(file), Path(dir_output+(scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix()))))
-            os.makedirs(Path(dir_output+(scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix()))).parent, exist_ok=True)
-            shutil.copy(Path(file), Path(dir_output+(scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix()))))
-#            shutil.copy(Path(root) / file, Path(dir_output) / path / clean_name)
+            logging.debug("%s -->  %s",Path(file), Path(dir_output+clean_filepath))
+            shutil.copy(Path(file), Path(dir_output+clean_filepath))
 
         # copy README.html to index.html if no index.html
         logging.debug("copy README.html to index.html if no index.html")
-#        if not os.path.exists(Path(dir_output) / 'index.html'):
-#            shutil.copyfile(Path(dir_output) / 'README.html', Path(dir_output) / 'index.html')
+        if not os.path.exists(Path(dir_output) / 'index.html'):
+            shutil.copyfile(Path(dir_output) / 'README.html', Path(dir_output) / 'index.html')
 
         # copy static assets directory
         logging.debug("copy static assets directory")
