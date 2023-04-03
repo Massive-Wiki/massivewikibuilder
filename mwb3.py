@@ -159,11 +159,10 @@ def main():
                 wikilinks[Path(file).stem] = html_path
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
-                    link = "/"+scrub_path(Path(file).relative_to(dir_wiki).with_suffix('.html').as_posix())
+                    link = Path(clean_filepath).with_suffix(".html").as_posix()
                     title = Path(file).stem
                     lunr_idx_data.append({"link":link, "title":title, "body": Path(file).read_text()})
                     lunr_posts.append({"link":link, "title":title})
-                # add wikipage to all_pages list
             else:
                 print("key: ", Path(file).name)
                 html_path = clean_filepath
@@ -263,6 +262,11 @@ def main():
             lunr_posts_sitepath=lunr_posts_sitepath,
         )
         (Path(dir_output) / "search.html").write_text(html)
+
+        # copy README.html to index.html if no index.html
+        logging.debug("copy README.html to index.html if no index.html")
+        if not os.path.exists(Path(dir_output) / 'index.html'):
+            shutil.copyfile(Path(dir_output) / 'README.html', Path(dir_output) / 'index.html')
 
         # copy static assets directory
         logging.debug("copy static assets directory")
