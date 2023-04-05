@@ -153,9 +153,9 @@ def main():
             logging.debug("file %s: ", file)
             clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
             if Path(file).suffix == '.md':
-                print("key: ", Path(file).name)
+                logging.debug("key: %s", Path(file).name)
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
-                print("html path: ", html_path, "\n")
+                logging.debug("html path: %s", html_path)
                 # append path and link to wikilinks dict
                 wikilinks[Path(file).stem] = html_path
                 # add lunr data to lunr idx_data and posts lists
@@ -165,9 +165,9 @@ def main():
                     lunr_idx_data.append({"link":link, "title":title, "body": Path(file).read_text()})
                     lunr_posts.append({"link":link, "title":title})
             else:
-                print("key: ", Path(file).name)
+                logging.debug("key: %s", Path(file).name)
                 html_path = clean_filepath
-                print("html path: ", html_path, "\n")
+                logging.debug("html path: %s", html_path)
                 # add path and link to wikilinks dict
                 wikilinks[Path(file).name] = html_path
         logging.debug("wikilinks: %s", wikilinks)
@@ -190,7 +190,7 @@ def main():
             # make needed subdirectories
             os.makedirs(Path(dir_output+clean_filepath).parent, exist_ok=True)
             if Path(file).suffix == '.md':
-                print(f"Rendering {file}")
+                logging.info("Rendering %s", file)
                 # parse Markdown file
                 markdown_text, front_matter = read_markdown_and_front_matter(Path(file))
                 if front_matter is False:
