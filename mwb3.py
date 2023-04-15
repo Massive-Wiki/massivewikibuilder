@@ -142,7 +142,9 @@ def main():
         os.mkdir(dir_output)
         
         # get list of wiki files using a glob.iglob iterator (consumed in list comprehension)
-        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]
+        # 'include_hidden=False' requires Python 3.11
+        #allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]        
+        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True]
     
         # read wiki content and build wikilinks dictionary; lunr index lists
         if(args.lunr):
