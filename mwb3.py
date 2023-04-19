@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v3.0.0
+# Massive Wiki Builder v3.0.0 prerelease
 
 # set up logging
 import logging, os
@@ -24,7 +24,7 @@ from dateutil.parser import parse # pip install python-dateutil
 import jinja2
 import yaml
 
-# mistletoe based Markdown to HTML conversion
+# pip install - mistletoe based Markdown to HTML conversion
 from mistletoe import Document
 from mistletoe_renderer.massivewiki import MassiveWikiRenderer
 
@@ -142,7 +142,7 @@ def main():
         os.mkdir(dir_output)
         
         # get list of wiki files using a glob.iglob iterator (consumed in list comprehension)
-        # 'include_hidden=False' requires Python 3.11
+        # 'include_hidden=False' requires Python 3.11 - TODO: use `include_hidden=False` when we have 3.11 support
         #allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]        
         allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True)]
     
@@ -187,7 +187,6 @@ def main():
             sidebar_body = ''
 
         for file in allfiles:
-            # TODO: refactor Path(file) --? used in several places
             clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
             # make needed subdirectories
             os.makedirs(Path(dir_output+clean_filepath).parent, exist_ok=True)
