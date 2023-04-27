@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
-# Massive Wiki Builder v3.0.0 prerelease
+################################################################
+#
+# mwb.py - Massive Wiki Builder
+# https://github.com/peterkaminski/massivewikibuilder
+#
+################################################################
+
+APPVERSION = 'v3.0.0-dev' # pre-release
+APPNAME = 'Massive Wiki Builder'
 
 # set up logging
 import logging, os
@@ -234,6 +242,14 @@ def main():
                     'change':change,
                     'author':author,
                 })
+            # create build results
+            with open(Path(dir_output) / 'build-results.json', 'w') as outfile:
+                build_results = {
+                    'builder_name':APPNAME,
+                    'builder_version':APPVERSION,
+                    'build_time':build_time,
+                }
+                json.dump(build_results, outfile)
             # copy all original files
             logging.debug("Copy all original files")
             logging.debug("%s -->  %s",Path(file), Path(dir_output+clean_filepath))
