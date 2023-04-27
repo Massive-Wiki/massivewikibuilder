@@ -155,10 +155,8 @@ def main():
         allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True)]
     
         # read wiki content and build wikilinks dictionary; lunr index lists
-        if(args.lunr):
-            lunr_idx_data=[]
-            lunr_posts=[]
-
+        lunr_idx_data=[]
+        lunr_posts=[]
         for file in allfiles:
             logging.debug("file %s: ", file)
             clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
