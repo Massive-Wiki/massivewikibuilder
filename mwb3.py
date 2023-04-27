@@ -78,7 +78,7 @@ def read_markdown_and_front_matter(path):
         if found_front_matter_end:
             try:
                 front_matter = yaml.safe_load(''.join(lines[1:count]))
-            except yaml.parser.ParserError:
+            except (yaml.parser.ParserError, yaml.scanner.ScannerError):
                 # return Markdown + False (YAML syntax error)
                 return ''.join(lines), False
             # return Markdown + front_matter
