@@ -9,6 +9,7 @@ from itertools import chain
 from mistletoe.span_token import SpanToken
 from mistletoe.html_renderer import HTMLRenderer
 from pathlib import Path
+import html
 import re
 
 __all__ = ['DoubleSquareBracketLink', 'EmbeddedImageDoubleSquareBracketLink', 'MassiveWikiRenderer']
@@ -60,13 +61,12 @@ class MassiveWikiRenderer(HTMLRenderer):
         target = token.target
         logging.debug("token.target: %s", token.target)
         logging.debug("inner(token): %s", self.render_inner(token))
-        wikilink_key = Path(self.render_inner(token)).name
+        wikilink_key = html.unescape(Path(self.render_inner(token)).name)
+        logging.debug("wikilink_key: %s", wikilink_key)
         wikilink_value = self._wikilinks.get(wikilink_key, None)
         logging.debug("wikilink_value: %s", wikilink_value)
         if wikilink_value:
             inner = Path(wikilink_value).relative_to(self._rootdir).as_posix()
-            if Path(wikilink_value).suffix == '.md':
-                inner = Path(wikilink_value).relative_to(self._rootdir).with_suffix('.html').as_posix()
         else:
             inner = self.render_inner(token)
         logging.debug("inner: %s", inner)

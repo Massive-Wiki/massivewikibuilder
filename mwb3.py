@@ -7,7 +7,7 @@
 #
 ################################################################
 
-APPVERSION = 'v3.0.1'
+APPVERSION = 'v3.0.2'
 APPNAME = 'Massive Wiki Builder'
 
 # set up logging
