@@ -102,7 +102,7 @@ def index_wiki(dir_wiki):
     for i, f in enumerate(mdfiles):
         link = "/"+scrub_path(Path(f).relative_to(dir_wiki).with_suffix('.html').as_posix())
         title = Path(f).stem
-        idx_data.append({"link":link, "title":title, "body": Path(f).read_text()})
+        idx_data.append({"link":link, "title":title, "body": Path(f).read_text(encoding='utf-8')})
         posts.append({"link":link, "title":title})
 
     logging.debug("index_wiki(): index length %s: ",len(idx_data))
@@ -112,7 +112,7 @@ def index_wiki(dir_wiki):
 # return Markdown (as string) and YAML front matter (as dict)
 # for YAML, {} = no front matter, False = YAML syntax error
 def read_markdown_and_front_matter(path):
-    with path.open() as infile:
+    with path.open(encoding='utf-8') as infile:
         lines = infile.readlines()
     # take care to look exactly for two `---` lines with valid YAML in between
     if lines and re.match(r'^---$',lines[0]):
