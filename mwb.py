@@ -263,9 +263,15 @@ def main():
                         author = ''
 
                     # remember this page for All Pages
+                    file_name = f"{clean_name[:-3]}.html"
+                    file_title = f"{file[:-3]}"
+                    if file_name == "index.html":
+                        file_name = ""
+                        file_title = ""
+
                     all_pages.append({
-                        'title':f"{readable_path}/{file[:-3]}".lstrip('/'),
-                        'path':f"{path}/{clean_name[:-3]}.html",
+                        'title':f"{readable_path}/{file_title}".strip('/'),
+                        'path':f"{path}/{file_name}",
                         'date':date,
                         'change':change,
                         'author':author,
