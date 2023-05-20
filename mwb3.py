@@ -72,7 +72,7 @@ def scrub_path(filepath):
 # return Markdown (as string) and YAML front matter (as dict)
 # for YAML, {} = no front matter, False = YAML syntax error
 def read_markdown_and_front_matter(path):
-    with path.open() as infile:
+    with path.open(encoding='utf-8') as infile:
         lines = infile.readlines()
     # take care to look exactly for two `---` lines with valid YAML in between
     if lines and re.match(r'^---$',lines[0]):
@@ -170,7 +170,7 @@ def main():
                 if(args.lunr):
                     link = Path(clean_filepath).with_suffix(".html").as_posix()
                     title = Path(file).stem
-                    lunr_idx_data.append({"link":link, "title":title, "body": Path(file).read_text()})
+                    lunr_idx_data.append({"link":link, "title":title, "body": Path(file).read_text(encoding='utf-8')})
                     lunr_posts.append({"link":link, "title":title})
             else:
                 logging.debug("key: %s", Path(file).name)
