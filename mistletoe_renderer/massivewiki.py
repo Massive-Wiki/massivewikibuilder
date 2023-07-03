@@ -57,7 +57,6 @@ class MassiveWikiRenderer(HTMLRenderer):
         self._wikilinks = wikilinks
 
     def render_double_square_bracket_link(self, token):
-        template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         target = token.target
         logging.debug("token.target: %s", token.target)
         logging.debug("inner(token): %s", self.render_inner(token))
@@ -66,9 +65,11 @@ class MassiveWikiRenderer(HTMLRenderer):
         wikilink_value = self._wikilinks.get(wikilink_key, None)
         logging.debug("wikilink_value: %s", wikilink_value)
         if wikilink_value:
-            inner = Path(wikilink_value).relative_to(self._rootdir).as_posix()
+            inner = Path(wikilink_value['html_path']).relative_to(self._rootdir).as_posix()
+            template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         else:
             inner = self.render_inner(token)
+            template = '<span class="incipient-wikilink">{target}</span>'
         logging.debug("inner: %s", inner)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
 
@@ -85,7 +86,7 @@ class MassiveWikiRenderer(HTMLRenderer):
         logging.debug("wikilink_key: %s", wikilink_key)
         logging.debug("wikilink_value: %s", wikilink_value)
         if wikilink_value:
-            inner = Path(wikilink_value).relative_to(self._rootdir).as_posix()
+            inner = Path(wikilink_value['html_path']).relative_to(self._rootdir).as_posix()
         else:
             inner = token.content
         logging.debug("inner: %s", inner)

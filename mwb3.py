@@ -36,9 +36,9 @@ import yaml
 from mistletoe import Document
 from mistletoe_renderer.massivewiki import MassiveWikiRenderer
 
-wikilinks = {}
+wiki_pagelinks = {}
 def markdown_convert(markdown_text):
-    with MassiveWikiRenderer(rootdir='/',wikilinks=wikilinks) as renderer:
+    with MassiveWikiRenderer(rootdir='/',wikilinks=wiki_pagelinks) as renderer:
         return renderer.render(Document(markdown_text))
 
 # set up argparse
@@ -67,6 +67,15 @@ def load_config(path):
 # change ' ', ?', and '#' to '_', because they're inconvenient in URLs
 def scrub_path(filepath):
     return re.sub(r'([ _?\#]+)', '_', filepath)
+
+# find outgoing wikilinks in a wiki page
+def find_tolinks(file):
+    with open(file, 'r', encoding='utf-8') as infile:
+        pagetext = infile.read()
+    # use negative lookbehind assertion to exclude '![[' links
+    wikilink_pattern = re.compile(r"(?<!!)\[\[ *(.+?) *(\| *.+?)? *\]\]")
+    to_links = [p[0] for p in wikilink_pattern.findall(pagetext)]
+    return to_links
 
 # take a path object pointing to a Markdown file
 # return Markdown (as string) and YAML front matter (as dict)
@@ -164,8 +173,8 @@ def main():
                 logging.debug("key: %s", Path(file).name)
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 logging.debug("html path: %s", html_path)
-                # append path and link to wikilinks dict
-                wikilinks[Path(file).stem] = html_path
+                # add html path and backlinks list to wiki_path_links dictionary
+                wiki_pagelinks[Path(file).stem] = {'html_path':html_path, 'backlinks':[]}
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     link = Path(clean_filepath).with_suffix(".html").as_posix()
@@ -176,10 +185,22 @@ def main():
                 logging.debug("key: %s", Path(file).name)
                 html_path = clean_filepath
                 logging.debug("html path: %s", html_path)
-                # add path and link to wikilinks dict
-                wikilinks[Path(file).name] = html_path
-        logging.debug("wikilinks: %s", wikilinks)
+                # add html path and backlinks list to wiki_pagelinks dict
+                wiki_pagelinks[Path(file).name] = {'html_path':html_path, 'backlinks':[]}
+                
+        logging.debug("wiki page links: %s", wiki_pagelinks)
         logging.debug("lunr index length %s: ",len(lunr_idx_data))
+
+        # update wiki_pagelinks dictionary with backlinks
+        for file in allfiles:
+            if Path(file).suffix == '.md':
+                to_links = find_tolinks(file)
+                for page in to_links:
+                    logging.info("on page %s add backlink to page %s", Path(page).stem, wiki_pagelinks[Path(file).stem]['html_path'])
+                    if ( Path(page).stem in wiki_pagelinks and
+                         not any(wiki_pagelinks[Path(file).stem]['html_path'] in t for t in wiki_pagelinks[Path(page).stem]['backlinks']) ):
+                        backlink_tuple = (wiki_pagelinks[Path(file).stem]['html_path'],Path(file).stem)
+                        wiki_pagelinks[Path(page).stem]['backlinks'].append(backlink_tuple)
 
         # render all the Markdown files
         logging.debug("copy wiki to output; render .md files to HTML")
@@ -216,6 +237,7 @@ def main():
                     title=Path(file).stem,
                     markdown_body=markdown_body,
                     sidebar_body=sidebar_body,
+                    backlinks=wiki_pagelinks.get(Path(file).stem)['backlinks'],
                     lunr_index_sitepath=lunr_index_sitepath,
                     lunr_posts_sitepath=lunr_posts_sitepath,
                 )
