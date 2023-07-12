@@ -69,7 +69,7 @@ class MassiveWikiRenderer(HTMLRenderer):
             template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         else:
             inner = self.render_inner(token)
-            template = '<span class="incipient-wikilink">{target}</span>'
+            template = '<span class="incipient-wikilink">{target}<span class="tooltiptext">This MassiveWiki page has not yet been created.</span></span>'
         logging.debug("inner: %s", inner)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
 
