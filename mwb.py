@@ -24,6 +24,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 import time
 import traceback
 
@@ -193,6 +194,8 @@ def main():
 
         # update wiki_pagelinks dictionary with backlinks
         for file in allfiles:
+            if Path(file).name == config['sidebar']:  # do not backlink to sidebar
+                continue
             if Path(file).suffix == '.md':
                 to_links = find_tolinks(file)
                 for page in to_links:
@@ -255,12 +258,15 @@ def main():
                     author = ''
 
                 # remember this page for All Pages
+                # strip Markdown headers and add truncated content (used for recent_pages)
+                stripped_text = re.sub(r'^#+.*\n?', '', markdown_text, flags=re.MULTILINE)
                 all_pages.append({
                     'title':Path(file).stem,
                     'path':Path(clean_filepath).with_suffix(".html").as_posix(),
                     'date':date,
                     'change':change,
                     'author':author,
+                    'abstract':textwrap.shorten(stripped_text, width=257),
                 })
             # create build results
             with open(Path(dir_output) / 'build-results.json', 'w') as outfile:
