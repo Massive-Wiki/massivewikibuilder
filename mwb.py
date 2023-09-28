@@ -7,7 +7,7 @@
 #
 ################################################################
 
-APPVERSION = 'v3.1.0'
+APPVERSION = 'v3.1.1-candidate'
 APPNAME = 'Massive Wiki Builder'
 
 # set up logging
@@ -162,7 +162,7 @@ def main():
         # get list of wiki files using a glob.iglob iterator (consumed in list comprehension)
         # 'include_hidden=False' requires Python 3.11 - TODO: use `include_hidden=False` when we have 3.11 support
         #allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True, include_hidden=False)]        
-        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*.*", recursive=True)]
+        allfiles = [f for f in glob.iglob(f"{dir_wiki}/**/*", recursive=True) if os.path.isfile(f)]
     
         # read wiki content and build wikilinks dictionary; lunr index lists
         lunr_idx_data=[]
