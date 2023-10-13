@@ -8,35 +8,53 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
+import os
+import subprocess
+import logging
+
 def run_mwb(input_directory):
     """
     Runs mwb.py with the provided input directory and an output directory at the same level.
     Captures stdout and stderr, checks return code for success/fail.
     """
-    output_directory = os.path.join(os.path.dirname(input_directory), "output")
-    cmd = [
-        "./mwb.py",
-        "-c", "../mwb.yaml",
-        "-w", input_directory,
-        "-o", output_directory,
-        "-t", "../this-wiki-themes/basso",
-        "--lunr"
-    ]
+    try:
+        output_directory = os.path.join(os.path.dirname(input_directory), "output")
+        cmd = [
+            "./mwb.py",
+            "-c", "../mwb.yaml",
+            "-w", input_directory,
+            "-o", output_directory,
+            "-t", "../this-wiki-themes/basso",
+            "--lunr"
+        ]
 
-    logging.info("Running mwb.py...")
-    result = subprocess.run(cmd, capture_output=True, text=True)
+        logging.info("Running mwb.py...")
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
-    if result.stdout:
-        logging.info(result.stdout)
-    if result.stderr:
-        logging.error(result.stderr)
+        if result.stdout:
+            logging.info(result.stdout)
+        if result.stderr:
+            logging.error(result.stderr)
 
-    if result.returncode != 0:
-        logging.error("mwb.py script execution failed!")
+        if result.returncode != 0:
+            logging.error("mwb.py script execution failed!")
+            return False
+
+        logging.info("mwb.py executed successfully.")
+        return True
+
+    except OSError as e:
+        # OSError could be raised for issues related to file paths, directories, or if mwb.py doesn't exist
+        logging.error(f"OS Error (file paths, directories, mwb.py doesn't exist?): {e}")
         return False
-
-    logging.info("mwb.py executed successfully.")
-    return True
+    except subprocess.CalledProcessError as e:
+        # This will be raised if the called process returns a non-zero return code
+        logging.error(f"CalledProcessError (called process returned a non-zero return code): {e}")
+        return False
+    except Exception as e:
+        # Generic error handler for any other exceptions
+        logging.error(f"Unexpected error occurred: {e}")
+        return False
 
 def compare_directories(good_output_dir, generated_output_dir):
     """
@@ -75,21 +93,22 @@ def compare_directories(good_output_dir, generated_output_dir):
 
 def setup_args():
     parser = argparse.ArgumentParser(description="Test the mwb.py script by comparing its output to known good outputs.")
-    parser.add_argument('--test-files-dir', required=True, help="Directory of static test files.")
-    parser.add_argument('--generated-output-dir', required=True, help="Directory of generated output files from mwb.py.")
-    parser.add_argument('--good-output-dir', required=True, help="Directory of known good output files to compare against.")
+    parser.add_argument('--input', '-i', required=True, help="Directory of source Markdown files.")
+    parser.add_argument('--output', '-o', required=True, help="Directory of mwb.py-generated output files.")
+    parser.add_argument('--baseline', '-b', required=True, help="Directory of known good output files to compare against.")
 
     return parser.parse_args()
 
 def main():
     args = setup_args()
+    logging.info(f"args: {args}")
 
-    if not run_mwb(args.test_files_dir):
+    if not run_mwb(args.input):
         logging.error("Aborting tests due to mwb.py failure.")
-        return
+        return 0
 
     logging.info("Comparing directories...")
-    if compare_directories(args.good_output_dir, args.generated_output_dir):
+    if compare_directories(args.baseline, args.output):
         return 1
     else:
         return 0
