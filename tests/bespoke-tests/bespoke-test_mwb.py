@@ -96,12 +96,17 @@ def setup_args():
     parser.add_argument('--input', '-i', required=True, help="Directory of source Markdown files.")
     parser.add_argument('--output', '-o', required=True, help="Directory of mwb.py-generated output files.")
     parser.add_argument('--baseline', '-b', required=True, help="Directory of known good output files to compare against.")
+    parser.add_argument('--random', '-r', action='store_true', help="Don't test, just return a random 0 or 1 exit code.")
 
     return parser.parse_args()
 
 def main():
     args = setup_args()
     logging.info(f"args: {args}")
+
+    if args.random:
+        import random
+        return random.randint(0, 1)
 
     if not run_mwb(args.input):
         logging.error("Aborting tests due to mwb.py failure.")
