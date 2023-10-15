@@ -97,7 +97,7 @@ def setup_args():
     parser.add_argument('--output', '-o', required=True, help="Directory of mwb.py-generated output files.")
     parser.add_argument('--baseline', '-b', required=True, help="Directory of known good output files to compare against.")
     parser.add_argument('--random', '-r', action='store_true', help="Don't test, just return a random 0 or 1 exit code.")
-    parser.add_argument('--force', '-f', choices=[0, 1], type=int, help='Force flag: 0 or 1')
+    parser.add_argument('--force', '-f', choices=[0, 1], type=int, help="Don't test, just return 0 or 1 exit code as provided.")
 
     return parser.parse_args()
 
