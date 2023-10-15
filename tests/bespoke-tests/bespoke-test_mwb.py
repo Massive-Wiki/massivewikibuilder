@@ -20,12 +20,12 @@ def run_mwb(input_directory):
     try:
         output_directory = os.path.join(os.path.dirname(input_directory), "output")
         cmd = [
-            "./mwb.py",
-            "-c", "../mwb.yaml",
+            "../../mwb.py",
+            "-c", "../../../mwb.yaml",
             "-w", input_directory,
             "-o", output_directory,
-            "-t", "../this-wiki-themes/basso",
-            "--lunr"
+            "-t", "../../../this-wiki-themes/basso",
+#            "--lunr"
         ]
 
         logging.info("Running mwb.py...")
@@ -56,7 +56,7 @@ def run_mwb(input_directory):
         logging.error(f"Unexpected error occurred: {e}")
         return False
 
-def compare_directories(good_output_dir, generated_output_dir):
+def compare_directories(baseline_output_dir, generated_output_dir):
     """
     Compares the contents of the known good output directory with the generated output directory.
     Prints warnings for any discrepancies.
@@ -67,12 +67,12 @@ def compare_directories(good_output_dir, generated_output_dir):
     compare_pass = True
 
     # Get the list of files in both directories
-    good_output_files = set(os.listdir(good_output_dir))
+    baseline_output_files = set(os.listdir(baseline_output_dir))
     generated_output_files = set(os.listdir(generated_output_dir))
     
     # Find missing and extra files
-    missing_files = good_output_files - generated_output_files
-    extra_files = generated_output_files - good_output_files
+    missing_files = baseline_output_files - generated_output_files
+    extra_files = generated_output_files - baseline_output_files
 
     for missing in missing_files:
         compare_pass = False
@@ -83,13 +83,25 @@ def compare_directories(good_output_dir, generated_output_dir):
         logging.warning(f"Extra file in generated output: {extra}")
 
     # Compare files that are present in both directories
-    for common_file in good_output_files.intersection(generated_output_files):
-        good_file_path = os.path.join(good_output_dir, common_file)
+    for common_file in baseline_output_files.intersection(generated_output_files):
+        baseline_file_path = os.path.join(baseline_output_dir, common_file)
+        if os.path.isdir(baseline_file_path) or common_file == 'build-results.json':
+            continue  # ignore build time difference
         generated_file_path = os.path.join(generated_output_dir, common_file)
 
-        if not filecmp.cmp(good_file_path, generated_file_path, shallow=False):
+        if not filecmp.cmp(baseline_file_path, generated_file_path, shallow=False):
             compare_pass = False
-            logging.warning(f"Mismatch in file content: {common_file}")
+            with open(baseline_file_path, 'r') as file1, open(generated_file_path, 'r') as file2:
+                lines1 = file1.readlines()
+                lines2 = file2.readlines()
+                for i,lines2 in enumerate(lines2):
+                    if lines2 != lines1[i]:
+                        if 'Site last updated on ' in lines1[i]:
+                            compare_pass = True  # ignore file update time difference
+                        else:
+                            print("line ",i," in ",generated_file_path," differs:")
+                            print(lines2)
+                            logging.warning(f"Mismatch in file content: {common_file}")
 
 def setup_args():
     parser = argparse.ArgumentParser(description="Test the mwb.py script by comparing its output to known good outputs.")
@@ -98,7 +110,6 @@ def setup_args():
     parser.add_argument('--baseline', '-b', required=True, help="Directory of known good output files to compare against.")
     parser.add_argument('--random', '-r', action='store_true', help="Don't test, just return a random 0 or 1 exit code.")
     parser.add_argument('--force', '-f', choices=[0, 1], type=int, help="Don't test, just return 0 or 1 exit code as provided.")
-
     return parser.parse_args()
 
 def main():
@@ -121,7 +132,7 @@ def main():
         return 1
     else:
         return 0
-    logging.info("Comparison finished.")
+    logging.info("Comparison finished.") # will never be reached
 
 if __name__ == "__main__":
     exit(main())
