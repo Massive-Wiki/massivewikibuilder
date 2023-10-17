@@ -23,6 +23,7 @@ Another set of links with explicit paths to wiki pages for testing:
 - [[the special??wiki page8]]
 - [[Link workbench/octothorpe #wiki page]]
 - [[Link workbench/what   about? #??____this ##page]]
+- [[/subdir2/this. directory. contains./wiki page8]]
 
 
 
