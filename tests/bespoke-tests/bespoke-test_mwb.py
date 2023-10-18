@@ -98,8 +98,9 @@ def compare_directories(baseline_output_dir, generated_output_dir):
                 for i,lines2 in enumerate(lines2):
                     if lines2 != lines1[i]:
                         if 'Site last updated on ' in lines1[i]:
-                            test_is_passing = True  # ignore file update time difference
+                            pass  # ignore file update time difference
                         else:
+                            test_is_passing = False
                             print("line ",i," in ",generated_file_path," differs:")
                             print(lines2)
                             logging.warning(f"Mismatch in file content: {common_file}")
@@ -130,10 +131,11 @@ def main():
 
     logging.info("Comparing directories...")
     if compare_directories(args.baseline, args.output):
+        logging.info("Comparison failed.")
         return 1
     else:
+        logging.info("Comparison finished, no faults.")
         return 0
-    logging.info("Comparison finished.") # will never be reached
 
 if __name__ == "__main__":
     exit(main())
