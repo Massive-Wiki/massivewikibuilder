@@ -69,17 +69,19 @@ def compare_directories(baseline_output_dir, generated_output_dir):
     baseline_output_files = set(os.listdir(baseline_output_dir))
     generated_output_files = set(os.listdir(generated_output_dir))
     
-    # Find missing and extra files
+    # Are there any missing files?
     missing_files = baseline_output_files - generated_output_files
+    if missing_files:
+        compare_pass = False
+        for missing in missing_files:
+            logging.warning(f"Missing file in generated output: {missing}")
+
+    # Are there any extra files?
     extra_files = generated_output_files - baseline_output_files
-
-    for missing in missing_files:
+    if extra_files:
         compare_pass = False
-        logging.warning(f"Missing file in generated output: {missing}")
-
-    for extra in extra_files:
-        compare_pass = False
-        logging.warning(f"Extra file in generated output: {extra}")
+        for extra in extra_files:
+            logging.warning(f"Extra file in generated output: {extra}")
 
     # Compare files that are present in both directories
     for common_file in baseline_output_files.intersection(generated_output_files):
