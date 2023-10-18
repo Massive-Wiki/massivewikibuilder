@@ -24,8 +24,7 @@ def run_mwb(input_directory):
             "-c", "../../../mwb.yaml",
             "-w", input_directory,
             "-o", output_directory,
-            "-t", "../../../this-wiki-themes/basso",
-#            "--lunr"
+            "-t", "../../../this-wiki-themes/basso"
         ]
 
         logging.info("Running mwb.py...")

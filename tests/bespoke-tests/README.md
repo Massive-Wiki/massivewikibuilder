@@ -21,3 +21,7 @@ INFO: Running mwb.py...
 INFO: mwb.py executed successfully.
 INFO: Comparing directories...
 ```
+
+## Scope and Limitations
+
+The current test suite does not build or check the Lunr search files.
