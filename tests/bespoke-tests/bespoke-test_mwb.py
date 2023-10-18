@@ -63,7 +63,7 @@ def compare_directories(baseline_output_dir, generated_output_dir):
     """
 
     # Set flag to pass
-    compare_pass = True
+    test_is_passing = True
 
     # Get the list of files in both directories
     baseline_output_files = set(os.listdir(baseline_output_dir))
@@ -72,14 +72,14 @@ def compare_directories(baseline_output_dir, generated_output_dir):
     # Are there any missing files?
     missing_files = baseline_output_files - generated_output_files
     if missing_files:
-        compare_pass = False
+        test_is_passing = False
         for missing in missing_files:
             logging.warning(f"Missing file in generated output: {missing}")
 
     # Are there any extra files?
     extra_files = generated_output_files - baseline_output_files
     if extra_files:
-        compare_pass = False
+        test_is_passing = False
         for extra in extra_files:
             logging.warning(f"Extra file in generated output: {extra}")
 
@@ -91,14 +91,14 @@ def compare_directories(baseline_output_dir, generated_output_dir):
         generated_file_path = os.path.join(generated_output_dir, common_file)
 
         if not filecmp.cmp(baseline_file_path, generated_file_path, shallow=False):
-            compare_pass = False
+            test_is_passing = False
             with open(baseline_file_path, 'r') as file1, open(generated_file_path, 'r') as file2:
                 lines1 = file1.readlines()
                 lines2 = file2.readlines()
                 for i,lines2 in enumerate(lines2):
                     if lines2 != lines1[i]:
                         if 'Site last updated on ' in lines1[i]:
-                            compare_pass = True  # ignore file update time difference
+                            test_is_passing = True  # ignore file update time difference
                         else:
                             print("line ",i," in ",generated_file_path," differs:")
                             print(lines2)
