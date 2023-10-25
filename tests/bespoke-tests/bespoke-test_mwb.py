@@ -18,7 +18,7 @@ def run_mwb(args):
     Captures stdout and stderr, checks return code for success/fail.
     """
     try:
-        output_directory = os.path.join(os.path.dirname(args.input), "output")
+        output_directory = os.path.join(os.path.dirname(args.input), args.mwb_output)
         cmd = [
             "../../mwb.py",
             "-c", args.mwb_config,
@@ -108,11 +108,11 @@ def compare_directories(baseline_output_dir, generated_output_dir):
 def setup_args():
     parser = argparse.ArgumentParser(description="Test the mwb.py script by comparing its output to known good outputs.")
     parser.add_argument('--input', '-i', required=True, help="Directory of source Markdown files.")
-    parser.add_argument('--output', '-o', required=True, help="Directory of mwb.py-generated output files.")
     parser.add_argument('--baseline', '-b', required=True, help="Directory of known good output files to compare against.")
     parser.add_argument('--random', '-r', action='store_true', help="Don't test, just return a random 0 or 1 exit code.")
     parser.add_argument('--force', '-f', choices=[0, 1], type=int, help="Don't test, just return 0 or 1 exit code as provided.")
-    # pass-through args
+    # arguments passed through to MWB
+    parser.add_argument('--mwb-output', default="test-output", help="Directory of mwb.py-generated output files.")
     parser.add_argument('--mwb-config', default="test-input/.massivewikibuilder/mwb.yaml", help="Configuration file for mwb. Default is 'test-input/.massivewikibuilder/mwb.yaml'.")
     parser.add_argument('--mwb-templates', default="test-input/.massivewikibuilder/this-wiki-themes/basso", help="Templates directory for mwb. Default is 'test-input/.massivewikibuilder/mwb.yaml'.")
     return parser.parse_args()
@@ -133,7 +133,7 @@ def main():
         return 0
 
     logging.info("Comparing directories...")
-    if compare_directories(args.baseline, args.output):
+    if compare_directories(args.baseline, args.mwb_output):
         logging.info("Comparison failed.")
         return 1
     else:
