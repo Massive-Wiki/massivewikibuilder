@@ -24,8 +24,8 @@ Another set of links with explicit paths to wiki pages for testing:
 - [[Link workbench/octothorpe #wiki page]]
 - [[Link workbench/what   about? #??____this ##page]]
 - [[/subdir2/this. directory. contains./wiki page8]]
-
-
+- [[Filename, with a comma]]
+- [[This filename has "double" quotes]]
 
 ### 2022-05-09
 We seem to be able to generate full wikilinks to other pages.

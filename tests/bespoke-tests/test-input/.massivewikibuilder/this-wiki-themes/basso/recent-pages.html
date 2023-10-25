@@ -1,0 +1,31 @@
+{% set page_title = 'Recent Changes - ' ~ wiki_title %}{% include '_header.html' %}
+<body class="has-navbar-fixed-top">
+  {% include '_navbar.html' %}
+  <section class="section">
+    <div class="container">
+      <div class="columns">
+        <div class="sidebar column is-one-fifth">
+          <div class="content markdown-body" style="border-right:1px black solid; padding-right:1em;">
+            {{ sidebar_body }}
+          </div>
+        </div>
+        <div class="column">
+          <div class="content markdown-body">
+            <h1>Recent new and updated pages</h1>
+            {% for page in pages %}
+            <p>
+	      <div><a href="{{page.path}}">{{page.title}}</a></div>
+	      {% if page.abstract is defined %}
+	      <div><blockquote class="recent-changes-page-abstract">{{page.abstract}}</blockquote></div>
+	      {% endif %}
+	    </p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% include '_footer.html' %}
+  <script>{% include '_javascript.html' %}</script>
+</body>
+</html>
