@@ -12,19 +12,19 @@ import os
 import subprocess
 import logging
 
-def run_mwb(input_directory):
+def run_mwb(args):
     """
     Runs mwb.py with the provided input directory and an output directory at the same level.
     Captures stdout and stderr, checks return code for success/fail.
     """
     try:
-        output_directory = os.path.join(os.path.dirname(input_directory), "output")
+        output_directory = os.path.join(os.path.dirname(args.input), "output")
         cmd = [
             "../../mwb.py",
-            "-c", "../../../mwb.yaml",
-            "-w", input_directory,
+            "-c", args.mwb_config,
+            "-w", args.input,
             "-o", output_directory,
-            "-t", "../../../this-wiki-themes/basso"
+            "-t", args.mwb_templates
         ]
 
         logging.info("Running mwb.py...")
@@ -112,6 +112,9 @@ def setup_args():
     parser.add_argument('--baseline', '-b', required=True, help="Directory of known good output files to compare against.")
     parser.add_argument('--random', '-r', action='store_true', help="Don't test, just return a random 0 or 1 exit code.")
     parser.add_argument('--force', '-f', choices=[0, 1], type=int, help="Don't test, just return 0 or 1 exit code as provided.")
+    # pass-through args
+    parser.add_argument('--mwb-config', default="test-input/.massivewikibuilder/mwb.yaml", help="Configuration file for mwb. Default is 'test-input/.massivewikibuilder/mwb.yaml'.")
+    parser.add_argument('--mwb-templates', default="test-input/.massivewikibuilder/this-wiki-themes/basso", help="Templates directory for mwb. Default is 'test-input/.massivewikibuilder/mwb.yaml'.")
     return parser.parse_args()
 
 def main():
@@ -125,7 +128,7 @@ def main():
         import random
         return random.randint(0, 1)
 
-    if not run_mwb(args.input):
+    if not run_mwb(args):
         logging.error("Aborting tests due to mwb.py failure.")
         return 0
 
