@@ -35,7 +35,7 @@
     </thead>
 
     <tbody>
-      {% for page in pages %}
+      {% for page in pages|sort(attribute='date',reverse=True) %}
       <tr>
         <td><a href="{{ page.path }}">{{page.title}}</a></td>
         <td>{{page.change}}</td>
