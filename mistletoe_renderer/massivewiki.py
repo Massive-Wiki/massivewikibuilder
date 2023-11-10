@@ -60,7 +60,7 @@ class MassiveWikiRenderer(HTMLRenderer):
         target = token.target
         logging.debug("token.target: %s", token.target)
         logging.debug("inner(token): %s", self.render_inner(token))
-        wikilink_key = html.unescape(Path(self.render_inner(token)).name)
+        wikilink_key = html.unescape(Path(self.render_inner(token)).name).lower()
         logging.debug("wikilink_key: %s", wikilink_key)
         wikilink_value = self._wikilinks.get(wikilink_key, None)
         logging.debug("wikilink_value: %s", wikilink_value)

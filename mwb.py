@@ -176,7 +176,7 @@ def main():
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 logging.debug("html path: %s", html_path)
                 # add html path and backlinks list to wiki_path_links dictionary
-                wiki_pagelinks[Path(file).stem] = {'html_path':html_path, 'backlinks':[]}
+                wiki_pagelinks[Path(file).stem.lower()] = {'html_path':html_path, 'backlinks':[]}
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     link = Path(clean_filepath).with_suffix(".html").as_posix()
@@ -188,7 +188,7 @@ def main():
                 html_path = clean_filepath
                 logging.debug("html path: %s", html_path)
                 # add html path and backlinks list to wiki_pagelinks dict
-                wiki_pagelinks[Path(file).name] = {'html_path':html_path, 'backlinks':[]}
+                wiki_pagelinks[Path(file).name.lower()] = {'html_path':html_path, 'backlinks':[]}
                 
         logging.debug("wiki page links: %s", wiki_pagelinks)
         logging.debug("lunr index length %s: ",len(lunr_idx_data))
@@ -200,11 +200,11 @@ def main():
             if Path(file).suffix == '.md':
                 to_links = find_tolinks(file)
                 for page in to_links:
-                    logging.info("on page %s add backlink to page %s", Path(page).stem, wiki_pagelinks[Path(file).stem]['html_path'])
-                    if ( Path(page).stem in wiki_pagelinks and
-                         not any(wiki_pagelinks[Path(file).stem]['html_path'] in t for t in wiki_pagelinks[Path(page).stem]['backlinks']) ):
-                        backlink_tuple = (wiki_pagelinks[Path(file).stem]['html_path'],Path(file).stem)
-                        wiki_pagelinks[Path(page).stem]['backlinks'].append(backlink_tuple)
+                    logging.info("on page %s add backlink to page %s", Path(page).stem, wiki_pagelinks[Path(file).stem.lower()]['html_path'])
+                    if ( Path(page).stem.lower() in wiki_pagelinks and
+                         not any(wiki_pagelinks[Path(file).stem.lower()]['html_path'] in t for t in wiki_pagelinks[Path(page).stem.lower()]['backlinks']) ):
+                        backlink_tuple = (wiki_pagelinks[Path(file).stem.lower()]['html_path'],Path(file).stem)
+                        wiki_pagelinks[Path(page).stem.lower()]['backlinks'].append(backlink_tuple)
 
         # render all the Markdown files
         logging.debug("copy wiki to output; render .md files to HTML")
@@ -241,7 +241,7 @@ def main():
                     title=Path(file).stem,
                     markdown_body=markdown_body,
                     sidebar_body=sidebar_body,
-                    backlinks=wiki_pagelinks.get(Path(file).stem)['backlinks'],
+                    backlinks=wiki_pagelinks.get(Path(file).stem.lower())['backlinks'],
                     lunr_index_sitepath=lunr_index_sitepath,
                     lunr_posts_sitepath=lunr_posts_sitepath,
                 )
