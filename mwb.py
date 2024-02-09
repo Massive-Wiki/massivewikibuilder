@@ -64,11 +64,10 @@ def load_config(path):
     with open(path) as infile:
         return yaml.safe_load(infile)
 
-# scrub wiki path to handle ' ', '_', '?', '"', '#' characters in wiki page names
-# change ' ', ?', and '#' to '_', because they're inconvenient in URLs
-# change double quote to '_' because of problems in HTML links
+# scrub wiki path to handle ' ', '_', '?', '"', '#', '%' characters in wiki page names
+# change those characters to '_' to avoid URL generation errors
 def scrub_path(filepath):
-    return re.sub(r'([ _?\#"]+)', '_', filepath)
+    return re.sub(r'([ _?\#%"]+)', '_', filepath)
 
 # find outgoing wikilinks in a wiki page
 def find_tolinks(file):
