@@ -4,7 +4,7 @@ Massive Wiki Builder is a static site generator for turning [Massive Wikis](http
 
 ## Typical Hierarchy
 
-Typically, there is a `.massivewikibuilder` directory, which contains `massivewikibuilder` (this repo), and other related files and directories.
+In a typical install there is a `.massivewikibuilder` directory which contains `massivewikibuilder` (this repo), and related files and directories.
 
 The `.` character is important when the MWB workspace directory is within the wiki itself.  MWB ignores dotfiles and dot-directories, so as it builds, it will ignore anything inside (for instance) `.obsidian` or `.massivewikibuilder` directories.  If you don't have it set up this way, MWB will continue to try to copy and convert the files in the output directory, and it will start an infinite loop, which will stop when the directory names get too long.
 
@@ -20,15 +20,26 @@ The `.` character is important when the MWB workspace directory is within the wi
 ------ output/ # MWB writes .html, .md, and .json files here
 ```
 
-Note that MWB removes (if necessary) and recreates the `output` directory each time it is run.
+(WLA: using `tree` format to show current directory structure)
+``` shell
+. # root directory of a wiki
+├── .massivewikibuilder # MWB workspace
+    ├── mwb.yaml # configuration file for this wiki
+    ├── massivewikibuilder # MWB
+    └── this-wiki-themes # theme(s) used for this wiki
+        ├── basso # a specific theme, customized for this wiki
+    └── output # MWB writes .html, .md, and .json files here
+```
+
+Note that MWB removes (if existing) and recreates the `output` directory each time it is run.
 
 ## Static Files
 
-Note: Prior to v1.9.0, MWB handled static files slightly differently. If `mwb-static` existed, it copied it from the theme directory to the output directory. Starting with v1.9.0, it will still do this, but it will output a warning, `WARNING:root:WARNING:root:mwb-static is deprecated, please use 'static'`. The warning is meant to suggest that you should move `mwb-static` into the `static` directory at the top level of the theme.  `static` is described below.
+Note: Prior to v1.9.0, MWB handled static files slightly differently. If `mwb-static` existed, it copied it from the theme directory to the output directory. Starting with v1.9.0, it will still do this, but it will output a warning, `WARNING:root:WARNING:root:mwb-static is deprecated, please use 'static'`. The warning is meant to suggest that you move `mwb-static` into the `static` directory at the top level of the theme.  `static` is described below.
 
 After the HTML pages are built from the Markdown files, if a directory named `static` exists at the top level of the theme, all the files and directories within it are copied to the root of the output directory.  By convention, static files such as CSS, JavaScript, and images are put in a directory inside `static` called `mwb-static`. Favicon files and other files that should be at the root of the website are put at the root of `static`.
 
-The name `static` is used in the theme because it's descriptive, and won't collide with anything in the wiki. (The _content_ of `static` is copied, but not `static` itself.)
+The name `static` is used in the theme because it is descriptive, and will not collide with anything in the wiki. (The _content_ of `static` is copied, but not `static` itself.)
 
 The `mwb-static` convention is used to contain static files used by the wiki, and instead of `static`, it is named `mwb-static` so it is less likely to collide with a wiki directory with the same name. (In contrast to `static` in the theme, `mwb-static` itself _is_ copied to the output directory, where all the wiki files and directories live.)
 
@@ -42,6 +53,18 @@ In the theme:
 -------- css/
 -------- js/
 -------- images/
+```
+
+(WLA: use `tree` format for directory display)
+``` shell
+├── basso # root of theme
+	├── static
+		├── favicon.ico # for instance, favicon.ico
+        └── mwb-static
+		    ├── css
+			├── js
+            └── images
+
 ```
 
 Results in the output website:
