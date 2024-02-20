@@ -9,8 +9,8 @@ In the Massive Wiki Builder repo:
 ```shell
 cd tests/bespoke-tests
 python -m venv venv
-pip install --upgrade pip
 source venv/bin/activate
+pip install --upgrade pip
 pip install -r ../../requirements.txt
 ./bespoke-test_mwb.py -i test-input -b baseline
 ```
@@ -19,8 +19,8 @@ pip install -r ../../requirements.txt
  ```shell
 cd tests/bespoke-tests
 python -m venv venv
-pip install --upgrade pip
 source venv/bin/activate
+pip install --upgrade pip
 pip install -r ../../requirements.txt
 ../../mwb.py -c test-input/.massivewikibuilder/mwb.yaml -w test-input -o baseline -t test-input/.massivewikibuilder/this-wiki-themes/basso
 ```
