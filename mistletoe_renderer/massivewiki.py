@@ -55,13 +55,15 @@ class MassiveWikiRenderer(HTMLRenderer):
 
     Args:
         rootdir (string): directory path to prepend to all links, defaults to '/'.
+        fileroot (string): local filesystem path to the root of the wiki, so we can read transcluded pages.
 
     Properties:
         links (array of strings, read-only): all of the double square bracket link targets found in this invocation.
     """
-    def __init__(self, rootdir='/', wikilinks={}):
+    def __init__(self, rootdir='/', fileroot=".", wikilinks={}):
         super().__init__(*chain([TranscludedDoubleSquareBracketLink,EmbeddedImageDoubleSquareBracketLink,DoubleSquareBracketLink]))
         self._rootdir = rootdir
+        self._fileroot = fileroot
         self._wikilinks = wikilinks
         self._transclusionAlert = False
 
@@ -115,8 +117,10 @@ class MassiveWikiRenderer(HTMLRenderer):
         wikilink_value = self._wikilinks.get(wikilink_key, None)
         logging.debug("TRANSCLUDED wikilink_value: %s", wikilink_value)
         if wikilink_value:
-            inner = Path(wikilink_value['html_path']).with_suffix('.md').relative_to(self._rootdir).as_posix()
-            template = '<div><object data="{rootdir}{inner}" width="611" height="317" type="text/markdown"></object></div>'
+            transclude_path = f"{self._rootdir}{Path(wikilink_value['html_path']).with_suffix('.md').relative_to(self._rootdir).as_posix()}"
+            logging.debug(f"TRANSCLUDED loading contents of '{transclude_path}'")
+            with open(transclude_path, 'r') as infile: inner = infile.read()
+            template = f'<pre>{inner}</pre>'
         else:
             inner = self.render_inner(token)
             template = '<p>TRANSCLUSION {target} ERROR</p>'

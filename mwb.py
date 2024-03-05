@@ -38,8 +38,8 @@ from mistletoe import Document
 from mistletoe_renderer.massivewiki import MassiveWikiRenderer
 
 wiki_pagelinks = {}
-def markdown_convert(markdown_text):
-    with MassiveWikiRenderer(rootdir='/',wikilinks=wiki_pagelinks) as renderer:
+def markdown_convert(markdown_text, fileroot):
+    with MassiveWikiRenderer(rootdir='/',fileroot=fileroot,wikilinks=wiki_pagelinks) as renderer:
         return renderer.render(Document(markdown_text))
 
 # set up argparse
@@ -105,12 +105,12 @@ def read_markdown_and_front_matter(path):
     return ''.join(lines), {}
 
 # read and convert Sidebar markdown to HTML
-def sidebar_convert_markdown(path):
+def sidebar_convert_markdown(path, fileroot):
     if path.exists():
         markdown_text, front_matter = read_markdown_and_front_matter(path)
     else:
         markdown_text = ''
-    return markdown_convert(markdown_text)
+    return markdown_convert(markdown_text, fileroot)
 
 # handle datetime.date serialization for json.dumps()
 def datetime_date_serializer(o):
@@ -212,7 +212,7 @@ def main():
         build_time = datetime.datetime.now(datetime.timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
 
         if 'sidebar' in config:
-            sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'])
+            sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'], args.wiki)
         else:
             sidebar_body = ''
 
@@ -230,7 +230,7 @@ def main():
                 # output JSON of front matter
                 (Path(dir_output+clean_filepath).with_suffix(".json")).write_text(json.dumps(front_matter, indent=2, default=datetime_date_serializer))
                 # render and output HTML
-                markdown_body = markdown_convert(markdown_text)
+                markdown_body = markdown_convert(markdown_text, args.wiki)
                 html = page.render(
                     build_time=build_time,
                     wiki_title=config['wiki_title'],
