@@ -12,8 +12,7 @@ from pathlib import Path
 import html
 import re
 
-__all__ = ['DoubleSquareBracketLink', 'EmbeddedImageDoubleSquareBracketLink', 'MassiveWikiRenderer']
-
+__all__ = ['DoubleSquareBracketLink', 'EmbeddedImageDoubleSquareBracketLink', 'TranscludedDoubleSquareBracketLink', 'MassiveWikiRenderer']
 
 class DoubleSquareBracketLink(SpanToken):
     """
@@ -41,6 +40,15 @@ class EmbeddedImageDoubleSquareBracketLink(SpanToken):
         else:
             self.target = ''
 
+class TranscludedDoubleSquareBracketLink(SpanToken):
+    """
+    Defines double square bracket link (span) for Markdown note transclusion
+    """
+    pattern = re.compile(r"!\[\[ *([^.|\]]+?)\]\]")
+
+    def __init__(self, match):
+        self.target = match.group(1)
+
 class MassiveWikiRenderer(HTMLRenderer):
     """
     Extends HTMLRenderer to handle double square bracket links.
@@ -52,42 +60,65 @@ class MassiveWikiRenderer(HTMLRenderer):
         links (array of strings, read-only): all of the double square bracket link targets found in this invocation.
     """
     def __init__(self, rootdir='/', wikilinks={}):
-        super().__init__(*chain([DoubleSquareBracketLink,EmbeddedImageDoubleSquareBracketLink]))
+        super().__init__(*chain([TranscludedDoubleSquareBracketLink,EmbeddedImageDoubleSquareBracketLink,DoubleSquareBracketLink]))
         self._rootdir = rootdir
         self._wikilinks = wikilinks
+        self._transclusionAlert = False
 
     def render_double_square_bracket_link(self, token):
+        logging.debug("WIKILINKED token: %s", token)
+        logging.debug("transclusion alert: %s", str(self._transclusionAlert))
         target = token.target
-        logging.debug("token.target: %s", token.target)
-        logging.debug("inner(token): %s", self.render_inner(token))
+        logging.debug("WIKILINKED token.target: %s", token.target)
+        logging.debug("WIKILINKED inner(token): %s", self.render_inner(token))
         wikilink_key = html.unescape(Path(self.render_inner(token)).name).lower()
-        logging.debug("wikilink_key: %s", wikilink_key)
+        logging.debug("WIKILINKED wikilink_key: %s", wikilink_key)
         wikilink_value = self._wikilinks.get(wikilink_key, None)
-        logging.debug("wikilink_value: %s", wikilink_value)
+        logging.debug("WIKILINKED wikilink_value: %s", wikilink_value)
         if wikilink_value:
             inner = Path(wikilink_value['html_path']).relative_to(self._rootdir).as_posix()
             template = '<a class="wikilink" href="{rootdir}{inner}">{target}</a>'
         else:
             inner = self.render_inner(token)
             template = '<span class="incipient-wikilink">{target}</span>'
-        logging.debug("inner: %s", inner)
+        logging.debug("WIKILINKED inner: %s", inner)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
 
     def render_embedded_image_double_square_bracket_link(self, token):
+        logging.debug("EMBEDDED token: %s", token)
         template = '<img src="{rootdir}{inner}" alt="{target}" />'
         target = token.target
         if not target:
             target = "an image with no alt text"
-        logging.debug("token.target: %s", token.target)
-        logging.debug("token.content: %s", token.content)
-        logging.debug("inner(token): %s", self.render_inner(token))
+        logging.debug("EMBEDDED token.target: %s", token.target)
+        logging.debug("EMBEDDED token.content: %s", token.content)
+        logging.debug("EMBEDDED inner(token): %s", self.render_inner(token))
         wikilink_key = token.content.lower()
         wikilink_value = self._wikilinks.get(wikilink_key, None)
-        logging.debug("wikilink_key: %s", wikilink_key)
-        logging.debug("wikilink_value: %s", wikilink_value)
+        logging.debug("EMBEDDED wikilink_key: %s", wikilink_key)
+        logging.debug("EMBEDDED wikilink_value: %s", wikilink_value)
         if wikilink_value:
             inner = Path(wikilink_value['html_path']).relative_to(self._rootdir).as_posix()
         else:
             inner = token.content
-        logging.debug("inner: %s", inner)
+        logging.debug("EMBEDDED inner: %s", inner)
+        return template.format(target=target, inner=inner, rootdir=self._rootdir)
+
+    def render_transcluded_double_square_bracket_link(self, token):
+        logging.debug("TRANSCLUDED token: %s", token)
+        self._transclusionAlert = True
+        target = token.target
+        logging.debug("TRANSCLUDED token.target: %s", token.target)
+        logging.debug("TRANSCLUDED inner(token): %s", self.render_inner(token))
+        wikilink_key = html.unescape(Path(self.render_inner(token)).name).lower()
+        logging.debug("TRANSCLUDED wikilink_key: %s", wikilink_key)
+        wikilink_value = self._wikilinks.get(wikilink_key, None)
+        logging.debug("TRANSCLUDED wikilink_value: %s", wikilink_value)
+        if wikilink_value:
+            inner = Path(wikilink_value['html_path']).with_suffix('.md').relative_to(self._rootdir).as_posix()
+            template = '<div><object data="{rootdir}{inner}" width="611" height="317" type="text/markdown"></object></div>'
+        else:
+            inner = self.render_inner(token)
+            template = '<p>TRANSCLUSION {target} ERROR</p>'
+        logging.debug("TRANSCLUDED inner: %s", inner)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
