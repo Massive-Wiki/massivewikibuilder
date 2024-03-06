@@ -169,13 +169,14 @@ def main():
         lunr_posts=[]
         for file in allfiles:
             logging.debug("file %s: ", file)
-            clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
+            fs_path = rootdir+Path(file).relative_to(dir_wiki).as_posix()
+            clean_filepath = scrub_path(fs_path)
             if Path(file).suffix == '.md':
                 logging.debug("key: %s", Path(file).name)
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 logging.debug("html path: %s", html_path)
                 # add html path and backlinks list to wiki_path_links dictionary
-                wiki_pagelinks[Path(file).stem.lower()] = {'html_path':html_path, 'backlinks':[]}
+                wiki_pagelinks[Path(file).stem.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[]}
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     link = Path(clean_filepath).with_suffix(".html").as_posix()
@@ -187,7 +188,7 @@ def main():
                 html_path = clean_filepath
                 logging.debug("html path: %s", html_path)
                 # add html path and backlinks list to wiki_pagelinks dict
-                wiki_pagelinks[Path(file).name.lower()] = {'html_path':html_path, 'backlinks':[]}
+                wiki_pagelinks[Path(file).name.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[]}
                 
         logging.debug("wiki page links: %s", wiki_pagelinks)
         logging.debug("lunr index length %s: ",len(lunr_idx_data))
