@@ -6,6 +6,7 @@ import logging, os
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
 
 from itertools import chain
+from mistletoe import Document
 from mistletoe.span_token import SpanToken
 from mistletoe.html_renderer import HTMLRenderer
 from pathlib import Path
@@ -121,7 +122,7 @@ class MassiveWikiRenderer(HTMLRenderer):
             transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
             logging.debug(f"TRANSCLUDED loading contents of '{transclude_path}'")
             with open(transclude_path, 'r') as infile: inner = infile.read()
-            template = f'<pre>{inner}</pre>'
+            template = self.render(Document(inner))
         else:
             inner = self.render_inner(token)
             template = '<p>TRANSCLUSION {target} ERROR</p>'
