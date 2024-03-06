@@ -118,7 +118,6 @@ class MassiveWikiRenderer(HTMLRenderer):
         wikilink_value = self._wikilinks.get(wikilink_key, None)
         logging.debug("TRANSCLUDED wikilink_value: %s", wikilink_value)
         if wikilink_value:
-#            transclude_path = f"{self._fileroot}{self._rootdir}{Path(wikilink_value['html_path']).with_suffix('.md').relative_to(self._rootdir).as_posix()}"
             transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
             logging.debug(f"TRANSCLUDED loading contents of '{transclude_path}'")
             with open(transclude_path, 'r') as infile: inner = infile.read()
