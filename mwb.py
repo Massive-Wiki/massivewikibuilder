@@ -27,6 +27,7 @@ import sys
 import textwrap
 import time
 import traceback
+import uuid
 
 # pip install
 from dateutil.parser import parse # pip install python-dateutil
@@ -38,8 +39,9 @@ from mistletoe import Document
 from mistletoe_renderer.massivewiki import MassiveWikiRenderer
 
 wiki_pagelinks = {}
-def markdown_convert(markdown_text, fileroot):
-    with MassiveWikiRenderer(rootdir='/',fileroot=fileroot,wikilinks=wiki_pagelinks) as renderer:
+
+def markdown_convert(markdown_text, fileroot, file_id):
+    with MassiveWikiRenderer(rootdir='/',fileroot=fileroot,wikilinks=wiki_pagelinks,file_id=file_id) as renderer:
         return renderer.render(Document(markdown_text))
 
 # set up argparse
@@ -110,7 +112,7 @@ def sidebar_convert_markdown(path, fileroot):
         markdown_text, front_matter = read_markdown_and_front_matter(path)
     else:
         markdown_text = ''
-    return markdown_convert(markdown_text, fileroot)
+    return markdown_convert(markdown_text, fileroot, '')
 
 # handle datetime.date serialization for json.dumps()
 def datetime_date_serializer(o):
@@ -175,8 +177,9 @@ def main():
                 logging.debug("key: %s", Path(file).name)
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 logging.debug("html path: %s", html_path)
-                # add html path and backlinks list to wiki_path_links dictionary
-                wiki_pagelinks[Path(file).stem.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[]}
+                # add filesystem path, html path, backlinks list, uuid to wiki_path_links dictionary
+                wikipage_id = uuid.uuid4().hex
+                wiki_pagelinks[Path(file).stem.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[], 'wikipage_id':wikipage_id}
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     link = Path(clean_filepath).with_suffix(".html").as_posix()
@@ -231,7 +234,8 @@ def main():
                 # output JSON of front matter
                 (Path(dir_output+clean_filepath).with_suffix(".json")).write_text(json.dumps(front_matter, indent=2, default=datetime_date_serializer))
                 # render and output HTML
-                markdown_body = markdown_convert(markdown_text, args.wiki)
+                file_id = uuid.uuid4().hex[-6:]
+                markdown_body = markdown_convert(markdown_text, args.wiki, file_id)
                 html = page.render(
                     build_time=build_time,
                     wiki_title=config['wiki_title'],

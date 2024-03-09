@@ -61,16 +61,16 @@ class MassiveWikiRenderer(HTMLRenderer):
     Properties:
         links (array of strings, read-only): all of the double square bracket link targets found in this invocation.
     """
-    def __init__(self, rootdir='/', fileroot=".", wikilinks={}):
+    def __init__(self, rootdir='/', fileroot='.', wikilinks={}, file_id=''):
         super().__init__(*chain([TranscludedDoubleSquareBracketLink,EmbeddedImageDoubleSquareBracketLink,DoubleSquareBracketLink]))
         self._rootdir = rootdir
         self._fileroot = fileroot
         self._wikilinks = wikilinks
-        self._transclusionAlert = False
+        self._file_id = file_id
+        self._tc_dict = dict.fromkeys([self._file_id], [])
 
     def render_double_square_bracket_link(self, token):
         logging.debug("WIKILINKED token: %s", token)
-        logging.debug("transclusion alert: %s", str(self._transclusionAlert))
         target = token.target
         logging.debug("WIKILINKED token.target: %s", token.target)
         logging.debug("WIKILINKED inner(token): %s", self.render_inner(token))
@@ -108,15 +108,20 @@ class MassiveWikiRenderer(HTMLRenderer):
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
 
     def render_transcluded_double_square_bracket_link(self, token):
-        logging.debug("TRANSCLUDED fileroot: %s", self._fileroot)
+        logging.debug("TRANSCLUDED file_id: %s", self._file_id)
+        logging.debug("TRANSCLUDED fileroot: %s", self._fileroot)        
         logging.debug("TRANSCLUDED token: %s", token)
-        self._transclusionAlert = True
         target = token.target
         logging.debug("TRANSCLUDED token.target: %s", token.target)
         logging.debug("TRANSCLUDED inner(token): %s", self.render_inner(token))
         wikilink_key = html.unescape(Path(self.render_inner(token)).name).lower()
         logging.debug("TRANSCLUDED wikilink_key: %s", wikilink_key)
         wikilink_value = self._wikilinks.get(wikilink_key, None)
+        logging.debug("TRANSCLUDED wikipage_id: %s", wikilink_value['wikipage_id'])
+        if any(wikilink_value['wikipage_id'] in x for x in self._tc_dict[self._file_id]):
+            print("ruh roh! we have a potential transclude loop")
+        else:
+            self._tc_dict[self._file_id].append(wikilink_value['wikipage_id'])
         logging.debug("TRANSCLUDED wikilink_value: %s", wikilink_value)
         if wikilink_value:
             transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
