@@ -119,9 +119,12 @@ class MassiveWikiRenderer(HTMLRenderer):
         wikilink_value = self._wikilinks.get(wikilink_key, None)
         logging.debug("TRANSCLUDED wikipage_id: %s", wikilink_value['wikipage_id'])
         if any(wikilink_value['wikipage_id'] in x for x in self._tc_dict[self._file_id]):
-            print("ruh roh! we have a potential transclude loop")
+            print("*** ruh roh! we have a potential transclude loop")
+            import sys
+            sys.exit()
         else:
             self._tc_dict[self._file_id].append(wikilink_value['wikipage_id'])
+            logging.debug("TRANSCLUDED _tc_dict: %s", self._tc_dict)
         logging.debug("TRANSCLUDED wikilink_value: %s", wikilink_value)
         if wikilink_value:
             transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
