@@ -113,26 +113,26 @@ class MassiveWikiRenderer(HTMLRenderer):
         logging.debug("TRANSCLUDED token: %s", token)
         target = token.target
         logging.debug("TRANSCLUDED token.target: %s", token.target)
+        inner = self.render_inner(token)
         logging.debug("TRANSCLUDED inner(token): %s", self.render_inner(token))
         wikilink_key = html.unescape(Path(self.render_inner(token)).name).lower()
         logging.debug("TRANSCLUDED wikilink_key: %s", wikilink_key)
         wikilink_value = self._wikilinks.get(wikilink_key, None)
-        logging.debug("TRANSCLUDED wikipage_id: %s", wikilink_value['wikipage_id'])
-        if any(wikilink_value['wikipage_id'] in x for x in self._tc_dict[self._file_id]):
-            print("*** ruh roh! we have a potential transclude loop")
-            import sys
-            sys.exit()
-        else:
-            self._tc_dict[self._file_id].append(wikilink_value['wikipage_id'])
-            logging.debug("TRANSCLUDED _tc_dict: %s", self._tc_dict)
         logging.debug("TRANSCLUDED wikilink_value: %s", wikilink_value)
         if wikilink_value:
-            transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
-            logging.debug(f"TRANSCLUDED loading contents of '{transclude_path}'")
-            with open(transclude_path, 'r') as infile: inner = infile.read()
-            template = self.render(Document(inner))
+            logging.debug("TRANSCLUDED wikipage_id: %s", wikilink_value['wikipage_id'])
+            if any(wikilink_value['wikipage_id'] in x for x in self._tc_dict[self._file_id]):
+                logging.debug("*** ruh roh! there is a transclude loop")
+                template = '<p>Cannot transclude <strong>{inner}</strong> within itself.</p>' 
+            else:
+                self._tc_dict[self._file_id].append(wikilink_value['wikipage_id'])
+                logging.debug("TRANSCLUDED _tc_dict: %s", self._tc_dict)
+                transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
+                logging.debug(f"TRANSCLUDED loading contents of '{transclude_path}'")
+                with open(transclude_path, 'r') as infile: inner = infile.read()
+                template = self.render(Document(inner))
         else:
-            inner = self.render_inner(token)
-            template = '<p>TRANSCLUSION {target} ERROR</p>'
-        logging.debug("TRANSCLUDED inner: %s", inner)
+            template = '<p>TRANSCLUSION {target} NOT FOUND</p>'
+#        logging.debug("TRANSCLUDED inner: %s", inner)
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
+
