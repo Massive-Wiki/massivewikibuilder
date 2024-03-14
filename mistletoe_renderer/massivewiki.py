@@ -68,6 +68,7 @@ class MassiveWikiRenderer(HTMLRenderer):
         self._wikilinks = wikilinks
         self._file_id = file_id
         self._tc_dict = dict.fromkeys([self._file_id], [])
+        self._tc_dict[self._file_id].append(self._file_id)
 
     def render_double_square_bracket_link(self, token):
         logging.debug("WIKILINKED token: %s", token)

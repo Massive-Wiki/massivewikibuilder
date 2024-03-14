@@ -18,6 +18,7 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
 import argparse
 import datetime
 import glob
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -27,7 +28,6 @@ import sys
 import textwrap
 import time
 import traceback
-import uuid
 
 # pip install
 from dateutil.parser import parse # pip install python-dateutil
@@ -177,8 +177,8 @@ def main():
                 logging.debug("key: %s", Path(file).name)
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 logging.debug("html path: %s", html_path)
-                # add filesystem path, html path, backlinks list, uuid to wiki_path_links dictionary
-                wikipage_id = uuid.uuid4().hex
+                # add filesystem path, html path, backlinks list, wikipage-id to wiki_path_links dictionary
+                wikipage_id = hashlib.md5(Path(file).stem.lower().encode()).hexdigest()
                 wiki_pagelinks[Path(file).stem.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[], 'wikipage_id':wikipage_id}
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
@@ -234,7 +234,7 @@ def main():
                 # output JSON of front matter
                 (Path(dir_output+clean_filepath).with_suffix(".json")).write_text(json.dumps(front_matter, indent=2, default=datetime_date_serializer))
                 # render and output HTML
-                file_id = uuid.uuid4().hex[-6:]
+                file_id = hashlib.md5(Path(file).stem.lower().encode()).hexdigest()
                 markdown_body = markdown_convert(markdown_text, args.wiki, file_id)
                 html = page.render(
                     build_time=build_time,
