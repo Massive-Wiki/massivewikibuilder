@@ -18,6 +18,7 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'WARNING').upper())
 import argparse
 import datetime
 import glob
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -38,8 +39,9 @@ from mistletoe import Document
 from mistletoe_renderer.massivewiki import MassiveWikiRenderer
 
 wiki_pagelinks = {}
-def markdown_convert(markdown_text):
-    with MassiveWikiRenderer(rootdir='/',wikilinks=wiki_pagelinks) as renderer:
+
+def markdown_convert(markdown_text, fileroot, file_id):
+    with MassiveWikiRenderer(rootdir='/',fileroot=fileroot,wikilinks=wiki_pagelinks,file_id=file_id) as renderer:
         return renderer.render(Document(markdown_text))
 
 # set up argparse
@@ -105,12 +107,12 @@ def read_markdown_and_front_matter(path):
     return ''.join(lines), {}
 
 # read and convert Sidebar markdown to HTML
-def sidebar_convert_markdown(path):
+def sidebar_convert_markdown(path, fileroot):
     if path.exists():
         markdown_text, front_matter = read_markdown_and_front_matter(path)
     else:
         markdown_text = ''
-    return markdown_convert(markdown_text)
+    return markdown_convert(markdown_text, fileroot, '')
 
 # handle datetime.date serialization for json.dumps()
 def datetime_date_serializer(o):
@@ -169,13 +171,15 @@ def main():
         lunr_posts=[]
         for file in allfiles:
             logging.debug("file %s: ", file)
-            clean_filepath = scrub_path(rootdir+Path(file).relative_to(dir_wiki).as_posix())
+            fs_path = rootdir+Path(file).relative_to(dir_wiki).as_posix()
+            clean_filepath = scrub_path(fs_path)
             if Path(file).suffix == '.md':
                 logging.debug("key: %s", Path(file).name)
                 html_path = Path(clean_filepath).with_suffix(".html").as_posix()
                 logging.debug("html path: %s", html_path)
-                # add html path and backlinks list to wiki_path_links dictionary
-                wiki_pagelinks[Path(file).stem.lower()] = {'html_path':html_path, 'backlinks':[]}
+                # add filesystem path, html path, backlinks list, wikipage-id to wiki_path_links dictionary
+                wikipage_id = hashlib.md5(Path(file).stem.lower().encode()).hexdigest()
+                wiki_pagelinks[Path(file).stem.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[], 'wikipage_id':wikipage_id}
                 # add lunr data to lunr idx_data and posts lists
                 if(args.lunr):
                     link = Path(clean_filepath).with_suffix(".html").as_posix()
@@ -187,7 +191,7 @@ def main():
                 html_path = clean_filepath
                 logging.debug("html path: %s", html_path)
                 # add html path and backlinks list to wiki_pagelinks dict
-                wiki_pagelinks[Path(file).name.lower()] = {'html_path':html_path, 'backlinks':[]}
+                wiki_pagelinks[Path(file).name.lower()] = {'fs_path':fs_path, 'html_path':html_path, 'backlinks':[]}
                 
         logging.debug("wiki page links: %s", wiki_pagelinks)
         logging.debug("lunr index length %s: ",len(lunr_idx_data))
@@ -212,7 +216,7 @@ def main():
         build_time = datetime.datetime.now(datetime.timezone.utc).strftime("%A, %B %d, %Y at %H:%M UTC")
 
         if 'sidebar' in config:
-            sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'])
+            sidebar_body = sidebar_convert_markdown(Path(dir_wiki) / config['sidebar'], args.wiki)
         else:
             sidebar_body = ''
 
@@ -230,7 +234,8 @@ def main():
                 # output JSON of front matter
                 (Path(dir_output+clean_filepath).with_suffix(".json")).write_text(json.dumps(front_matter, indent=2, default=datetime_date_serializer))
                 # render and output HTML
-                markdown_body = markdown_convert(markdown_text)
+                file_id = hashlib.md5(Path(file).stem.lower().encode()).hexdigest()
+                markdown_body = markdown_convert(markdown_text, args.wiki, file_id)
                 html = page.render(
                     build_time=build_time,
                     wiki_title=config['wiki_title'],
