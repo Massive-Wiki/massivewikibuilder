@@ -124,7 +124,7 @@ class MassiveWikiRenderer(HTMLRenderer):
             logging.debug("TRANSCLUDED wikipage_id: %s", wikilink_value['wikipage_id'])
             if any(wikilink_value['wikipage_id'] in x for x in self._tc_dict[self._file_id]):
                 logging.debug("*** ruh roh! there is a transclude loop")
-                template = '<p>Cannot transclude <strong>{inner}</strong> within itself.</p>' 
+                template = '<p><span class="transclusion-error">Cannot transclude <strong>{inner}</strong> within itself.</span></p>'
             else:
                 self._tc_dict[self._file_id].append(wikilink_value['wikipage_id'])
                 logging.debug("TRANSCLUDED _tc_dict: %s", self._tc_dict)
