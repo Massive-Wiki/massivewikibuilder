@@ -134,6 +134,6 @@ class MassiveWikiRenderer(HTMLRenderer):
                 template = self.render(Document(inner))
         else:
             template = '<p>TRANSCLUSION {target} NOT FOUND</p>'
-#        logging.debug("TRANSCLUDED inner: %s", inner)
+        logging.debug("TRANSCLUDED inner: %s", inner[:50])
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
 
