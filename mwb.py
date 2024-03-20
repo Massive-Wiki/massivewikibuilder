@@ -112,7 +112,8 @@ def sidebar_convert_markdown(path, fileroot):
         markdown_text, front_matter = read_markdown_and_front_matter(path)
     else:
         markdown_text = ''
-    return markdown_convert(markdown_text, fileroot, '')
+    fid = hashlib.md5(Path(path).stem.lower().encode()).hexdigest()
+    return markdown_convert(markdown_text, fileroot, fid)
 
 # handle datetime.date serialization for json.dumps()
 def datetime_date_serializer(o):
