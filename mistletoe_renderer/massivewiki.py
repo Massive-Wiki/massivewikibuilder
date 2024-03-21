@@ -131,9 +131,11 @@ class MassiveWikiRenderer(HTMLRenderer):
                 transclude_path = f"{self._fileroot}{wikilink_value['fs_path']}"
                 logging.debug(f"TRANSCLUDED loading contents of '{transclude_path}'")
                 with open(transclude_path, 'r') as infile: inner = infile.read()
-                template = self.render(Document(inner))
+                rendered_doc = self.render(Document(inner))
+                htmlpath = wikilink_value['html_path']
+                template = f'<p><a href="{htmlpath}" style="float:right">🔗</a> {rendered_doc} </p>'
         else:
-            template = '<p>TRANSCLUSION {target} NOT FOUND</p>'
+            template = '<p><span class="transclusion-error">TRANSCLUSION {target} NOT FOUND</span></p>'
         logging.debug("TRANSCLUDED inner: %s", inner[:50])
         return template.format(target=target, inner=inner, rootdir=self._rootdir)
 
