@@ -1,0 +1,7 @@
+# text only wiki page
+
+ - it might look like Markdown inside, but to mwb (and the filesystem) it has a
+    ".txt" suffix
+
+ - if you are viewing this page in Obsidian you may have launched a
+    text editor application.
