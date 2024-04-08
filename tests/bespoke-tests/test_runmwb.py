@@ -22,10 +22,10 @@ def test_mwb_with_valid_args(capture_stderr):
     run_mwb.main()
     
     # Get the captured stderr
-    captured_output = capture_stderr.getvalue().strip()
-    print(captured_output)
+    captured_output = capture_stderr.getvalue()
     
     # Assert the expected output
-    expected_output = "INFO: args: Namespace(input='input-dir', baseline='baseline', random=False, force=None, mwb_output='test-output', mwb_config='input-dir/.massivewikibuilder/mwb.yaml', mwb_templates='input-dir/.massivewikibuilder/this-wiki-themes/basso')\nINFO: Running mwb.py...\nINFO: mwb.py executed successfully.\nINFO: Comparing directories...\nINFO: Comparison finished, no faults."
+    expected_output = "args: Namespace(input='test-input', baseline='baseline', random=False, force=None, mwb_output='test-output', mwb_config='input-dir/.massivewikibuilder/mwb.yaml', mwb_templates='input-dir/.massivewikibuilder/this-wiki-themes/basso')\nRunning mwb.py...\nmwb.py executed successfully.\nComparing directories...\nComparison finished, no faults.\n"
+    
     assert captured_output == expected_output
 
