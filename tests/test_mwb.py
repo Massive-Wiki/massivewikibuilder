@@ -18,11 +18,11 @@ def run_mwb():
     """
     try:
         cmd = [
-            "../../mwb.py",
-            "-c", "test-input/.massivewikibuilder/mwb.yaml",
-            "-w", "test-input",
-            "-o", "test-output",
-            "-t", "test-input/.massivewikibuilder/this-wiki-themes/basso"
+            "./mwb.py",
+            "-c", "tests/test-input/.massivewikibuilder/mwb.yaml",
+            "-w", "tests/test-input",
+            "-o", "tests/test-output",
+            "-t", "test/test-input/.massivewikibuilder/this-wiki-themes/basso"
         ]
 
         subprocess.run(cmd, check=True)
@@ -52,4 +52,4 @@ def run_and_verify():
     run_mwb()
 
 def test_compare_output_with_baseline(run_and_verify):
-    assert compare_mwb_directories("test-output/", "baseline/"), "Directory contents do not match."
+    assert compare_mwb_directories("tests/test-output/", "tests/baseline/"), "Directory contents do not match."
