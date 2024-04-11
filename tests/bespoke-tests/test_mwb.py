@@ -25,20 +25,7 @@ def run_mwb():
             "-t", "test-input/.massivewikibuilder/this-wiki-themes/basso"
         ]
 
-        logging.info("Running mwb.py...")
-        result = subprocess.run(cmd, capture_output=True, text=True)
-
-        if result.stdout:
-            logging.info(result.stdout)
-        if result.stderr:
-            logging.error(result.stderr)
-
-        if result.returncode != 0:
-            logging.error("mwb.py script execution failed!")
-            return False
-
-        logging.info("mwb.py executed successfully.")
-        return True
+        subprocess.run(cmd, check=True)
 
     except OSError as e:
         # OSError could be raised for issues related to file paths, directories, or if mwb.py doesn't exist
