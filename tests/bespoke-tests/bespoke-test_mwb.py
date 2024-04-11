@@ -114,7 +114,7 @@ def setup_args():
     # arguments passed through to MWB
     parser.add_argument('--mwb-output', default="test-output", help="Directory of mwb.py-generated output files.")
     parser.add_argument('--mwb-config', default="test-input/.massivewikibuilder/mwb.yaml", help="Configuration file for mwb. Default is 'test-input/.massivewikibuilder/mwb.yaml'.")
-    parser.add_argument('--mwb-templates', default="test-input/.massivewikibuilder/this-wiki-themes/basso", help="Templates directory for mwb. Default is 'test-input/.massivewikibuilder/mwb.yaml'.")
+    parser.add_argument('--mwb-templates', default="test-input/.massivewikibuilder/this-wiki-themes/basso", help="Templates directory for mwb. Default is 'test-input/.massivewikibuilder/this-wiki-themes-basso'.")
     return parser.parse_args()
 
 def main():
