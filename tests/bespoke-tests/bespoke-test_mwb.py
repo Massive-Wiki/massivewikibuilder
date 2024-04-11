@@ -97,13 +97,10 @@ def compare_directories(baseline_output_dir, generated_output_dir):
                 lines2 = file2.readlines()
                 for i,lines2 in enumerate(lines2):
                     if lines2 != lines1[i]:
-                        if 'Site last updated on ' in lines1[i]:
-                            pass  # ignore file update time difference
-                        else:
-                            test_is_passing = False
-                            print("line ",i," in ",generated_file_path," differs:")
-                            print(lines2)
-                            logging.warning(f"Mismatch in file content: {common_file}")
+                        test_is_passing = False
+                        print("line ",i," in ",generated_file_path," differs:")
+                        print(lines2)
+                        logging.warning(f"Mismatch in file content: {common_file}")
 
 def setup_args():
     parser = argparse.ArgumentParser(description="Test the mwb.py script by comparing its output to known good outputs.")
