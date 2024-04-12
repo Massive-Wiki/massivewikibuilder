@@ -22,7 +22,7 @@ def run_mwb():
             "-c", "tests/test-input/.massivewikibuilder/mwb.yaml",
             "-w", "tests/test-input",
             "-o", "tests/test-output",
-            "-t", "test/test-input/.massivewikibuilder/this-wiki-themes/basso"
+            "-t", "tests/test-input/.massivewikibuilder/this-wiki-themes/basso"
         ]
 
         subprocess.run(cmd, check=True)
