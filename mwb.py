@@ -131,6 +131,9 @@ def main():
     config = load_config(args.config)
     if not 'recent_changes_count' in config:
         config['recent_changes_count'] = 5
+    # old 'repo' is now 'repo_html'; copy value over for old wikis
+    if not 'repo_html' in config:
+        config['repo_html'] = config['repo']
 
     # remember paths
     dir_output = Path(args.output).resolve().as_posix()
@@ -241,7 +244,9 @@ def main():
                     build_time=build_time,
                     wiki_title=config['wiki_title'],
                     author=config['author'],
-                    repo=config['repo'],
+                    repo=config['repo_html'],
+                    repo_html=config['repo_html'],
+                    repo_uri=config['repo_uri'],
                     license=config['license'],
                     title=Path(file).stem,
                     markdown_body=markdown_body,
@@ -305,7 +310,9 @@ def main():
             build_time=build_time,
             wiki_title=config['wiki_title'],
             author=config['author'],
-            repo=config['repo'],
+            repo=config['repo_html'],
+            repo_html=config['repo_html'],
+            repo_uri=config['repo_uri'],
             license=config['license'],
             sidebar_body=sidebar_body,
             lunr_index_sitepath=lunr_index_sitepath,
@@ -339,7 +346,9 @@ def main():
             pages_chrono=all_pages_chrono,
             wiki_title=config['wiki_title'],
             author=config['author'],
-            repo=config['repo'],
+            repo=config['repo_html'],
+            repo_html=config['repo_html'],
+            repo_uri=config['repo_uri'],
             license=config['license'],
             lunr_index_sitepath=lunr_index_sitepath,
             lunr_posts_sitepath=lunr_posts_sitepath,
@@ -354,7 +363,9 @@ def main():
             pages=recent_pages,
             wiki_title=config['wiki_title'],
             author=config['author'],
-            repo=config['repo'],
+            repo=config['repo_html'],
+            repo_html=config['repo_html'],
+            repo_uri=config['repo_uri'],
             license=config['license'],
             sidebar_body=sidebar_body,
             lunr_index_sitepath=lunr_index_sitepath,
