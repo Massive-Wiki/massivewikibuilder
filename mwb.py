@@ -205,10 +205,10 @@ def main():
                 to_links = find_tolinks(file)
                 for page in to_links:
                     logging.info("on page %s add backlink to page %s", Path(page).stem, wiki_pagelinks[Path(file).stem.lower()]['html_path'])
-                    if ( Path(page).stem.lower() in wiki_pagelinks and
-                         not any(wiki_pagelinks[Path(file).stem.lower()]['html_path'] in t for t in wiki_pagelinks[Path(page).stem.lower()]['backlinks']) ):
+                    if ( Path(page).name.lower() in wiki_pagelinks and
+                         not any(wiki_pagelinks[Path(file).stem.lower()]['html_path'] in t for t in wiki_pagelinks[Path(page).name.lower()]['backlinks']) ):
                         backlink_tuple = (wiki_pagelinks[Path(file).stem.lower()]['html_path'],Path(file).stem)
-                        wiki_pagelinks[Path(page).stem.lower()]['backlinks'].append(backlink_tuple)
+                        wiki_pagelinks[Path(page).name.lower()]['backlinks'].append(backlink_tuple)
 
         # render all the Markdown files
         logging.debug("copy wiki to output; render .md files to HTML")
