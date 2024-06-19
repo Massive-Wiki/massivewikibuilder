@@ -7,7 +7,7 @@
 #
 ################################################################
 
-APPVERSION = 'v3.2.0'
+APPVERSION = 'v3.2.1-candidate'
 APPNAME = 'Massive Wiki Builder'
 
 # set up logging
@@ -347,6 +347,7 @@ def main():
             author=config['author'],
             repo=config['repo'],
             license=config['license'],
+            sidebar_body=sidebar_body,
             lunr_index_sitepath=lunr_index_sitepath,
             lunr_posts_sitepath=lunr_posts_sitepath,
         )
