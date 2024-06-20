@@ -28,6 +28,7 @@ import sys
 import textwrap
 import time
 import traceback
+from urllib.parse import quote
 
 # pip install
 from dateutil.parser import parse # pip install python-dateutil
@@ -237,11 +238,16 @@ def main():
                 # render and output HTML
                 file_id = hashlib.md5(Path(file).stem.lower().encode()).hexdigest()
                 markdown_body = markdown_convert(markdown_text, args.wiki, file_id)
+                if 'edit_url' in config and 'edit_branch' in config:
+                    edit_url = (f"{config['edit_url']}edit/{config['edit_branch']}/{quote(Path(file).relative_to(dir_wiki).as_posix())}")
+                else:
+                    edit_url = ''
                 html = page.render(
                     build_time=build_time,
                     wiki_title=config['wiki_title'],
                     author=config['author'],
                     repo=config['repo'],
+                    edit_url=edit_url,
                     license=config['license'],
                     title=Path(file).stem,
                     markdown_body=markdown_body,
